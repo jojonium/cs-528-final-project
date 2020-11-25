@@ -1,3 +1,24 @@
 <resources>
     <string name="app_name">cs528finalproject</string>
+    <string name="x_text"> X </string>
+    <string name="signup_text"> SignUp </string>
+    <string name="signup_button"> Sign Up </string>
+    <string name="login_text"> Log in </string>
+    <string name="empty">  </string>
+    <string name="fullname"> Full Name </string>
+    <string name="fullnameemail"> Full Name or Email </string>
+    <string name="loginemail"> Login with Email </string>
+    <string name="email"> Email </string>
+    <string name="password"> Password </string>
+    <string name="cpassword"> Confirm Password </string>
+    <string name="atleast"> Must be at least 6 characters </string>
+    <string name="terms1"> By continuing, you agree to accept our </string>
+    <string name="terms2"> Privacy Policy &amp; Terms of Service </string>
+    <string name="login1"> DONT HAVE AN ACCOUNT ? </string>
+    <string name="login2"> LOG IN INSTEAD </string>
+    <string name="home"> Home</string>
+    <string name="report"> Report </string>
+    <string name="profile"> Profile </string>
+    <string name="upload"> Upload </string>
+    <string name="covid19info"> COVID - 19 Information </string>
 </resources>
