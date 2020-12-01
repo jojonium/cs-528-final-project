@@ -20,5 +20,5 @@
     <string name="report"> Report </string>
     <string name="profile"> Profile </string>
     <string name="upload"> Upload </string>
-    <string name="covid19info"> COVID - 19 Information </string>
+    <string name="covid19info"> Info </string>
 </resources>
