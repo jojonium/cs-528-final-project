@@ -1,5 +1,6 @@
 package edu.wpi.cs528finalproject
 
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
@@ -7,6 +8,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.EditText
+import android.widget.TextView
 import android.widget.Toast
 import com.google.firebase.auth.FirebaseAuth
 
@@ -21,6 +23,12 @@ class MainActivity : AppCompatActivity() {
 //        webSettings.javaScriptEnabled = true
 
         val signupbutton = findViewById<Button>(R.id.button2);
+        val loginbutton = findViewById<TextView>(R.id.LOGIN);
+
+        loginbutton.setOnClickListener{
+            val intent = Intent(this, LoginActivity::class.java)
+            startActivity(intent)
+        }
 
         signupbutton.setOnClickListener {
             RegisterUser()
