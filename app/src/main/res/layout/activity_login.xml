@@ -53,14 +53,14 @@
 
     <EditText
         android:id="@+id/fullnameinput"
-        android:layout_width="350sp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:ems="20"
         android:layout_marginVertical="5sp"
         android:layout_marginStart="20sp"
-        android:inputType="textPersonName"
+        android:layout_marginEnd="20sp"
+        android:ems="20"
         android:hint="@string/loginemail"
-        />
+        android:inputType="textPersonName" />
 
 
     <TextView
@@ -75,50 +75,49 @@
 
     <EditText
         android:id="@+id/passwordinput"
-        android:layout_width="350sp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginVertical="5sp"
-        android:ems="20"
         android:layout_marginStart="20sp"
-        android:inputType="textPassword"
+        android:layout_marginEnd="20sp"
+        android:ems="20"
         android:hint="@string/password"
-        />
-
+        android:inputType="textPassword" />
 
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/button2"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_width="350sp"
         android:layout_marginStart="20sp"
+        android:layout_marginEnd="20sp"
         android:backgroundTint="@color/red"
         android:text="@string/login_text"
-        app:cornerRadius="8dp"
-        />
+        app:cornerRadius="8dp" />
 
 
     <TextView
         android:id="@+id/terms1"
-        android:layout_width="350sp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="20sp"
+        android:layout_marginTop="20sp"
+        android:layout_marginEnd="20sp"
+        android:gravity="center"
         android:text="@string/login1"
         android:textSize="12sp"
-        android:layout_marginTop="20sp"
-        android:gravity="center"
-        android:layout_marginStart="20sp"
-        android:textStyle="bold"
-        />
+        android:textStyle="bold" />
 
     <TextView
         android:id="@+id/terms2"
-        android:layout_width="350sp"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginStart="20sp"
+        android:layout_marginEnd="20sp"
+        android:gravity="center"
         android:text="@string/login2"
         android:textSize="12sp"
-        android:gravity="center"
-        android:layout_marginStart="20sp"
-        android:textStyle="bold"
-        />
+        android:textStyle="bold" />
 
 
 

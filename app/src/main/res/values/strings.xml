@@ -1,4 +1,5 @@
 <resources>
+    <!-- Login and Signup -->
     <string name="app_name">cs528finalproject</string>
     <string name="x_text"> X </string>
     <string name="signup_text"> SignUp </string>
@@ -21,4 +22,12 @@
     <string name="profile"> Profile </string>
     <string name="upload"> Upload </string>
     <string name="covid19info"> COVID - 19 Information </string>
+
+    <!-- Report -->
+    <string name="Submit"> SUBMIT! </string>
+    <string name="LocationHint"> Location </string>
+    <string name="DateHint"> Date </string>
+    <string name="NumPeopleHint">Number of People</string>
+    <string name="ReportInstructions">See someone not wearing a mask? Make a report so we can let other users know.</string>
+
 </resources>
