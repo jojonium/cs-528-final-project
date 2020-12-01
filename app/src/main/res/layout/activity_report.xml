@@ -11,7 +11,7 @@
 
 
         <TextView
-            android:id="@+id/ReportTitle"
+            android:id="@+id/CheckInTitle"
             android:layout_width="match_parent"
             android:layout_height="49dp"
             android:layout_marginStart="10dp"
@@ -23,7 +23,7 @@
             android:textSize="24sp" />
 
         <View
-            android:id="@+id/reportDivider"
+            android:id="@+id/checkinDivider"
             android:layout_width="match_parent"
             android:layout_height="8dp"
             android:background="@color/red"
