@@ -39,4 +39,8 @@
     <string name="title_activity_navigation">NavigationActivity</string>
 
 
+    <!-- Profile Page -->
+    <string name="signout"> Signout </string>
+
+
 </resources>
