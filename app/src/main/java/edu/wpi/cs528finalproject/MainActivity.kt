@@ -23,11 +23,6 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_signup)
         database = Firebase.database.reference
-//        val webView = findViewById<WebView>(R.id.webview)
-//        webView.webViewClient = WebViewClient()
-//        webView.loadUrl("https://www.cdc.gov/coronavirus/2019-ncov/index.html")
-//        val webSettings = webView.settings
-//        webSettings.javaScriptEnabled = true
 
         val signupbutton = findViewById<Button>(R.id.button2);
         val loginbutton = findViewById<TextView>(R.id.LOGIN);
@@ -60,6 +55,9 @@ class MainActivity : AppCompatActivity() {
             Log.d("Main", "Successfully created with uid: ${it.result?.user?.uid}")
         }.addOnFailureListener {
             Toast.makeText(this, "Could not sign up : ${it.message}", Toast.LENGTH_SHORT).show()
+        }.addOnSuccessListener {
+            val intent = Intent(this, NavigationActivity::class.java)
+            startActivity(intent)
         }
     }
 

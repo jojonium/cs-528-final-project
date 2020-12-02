@@ -15,7 +15,7 @@
     <string name="atleast"> Must be at least 6 characters </string>
     <string name="terms1"> By continuing, you agree to accept our </string>
     <string name="terms2"> Privacy Policy &amp; Terms of Service </string>
-    <string name="login1"> DONT HAVE AN ACCOUNT ? </string>
+    <string name="login1"> DON\'T HAVE AN ACCOUNT? </string>
     <string name="login2"> SIGN UP INSTEAD </string>
     <string name="home"> Home</string>
     <string name="report"> Report </string>
@@ -36,6 +36,7 @@
     <string name="safetyTextZone">Red Zone</string>
     <string name="safetyTextNumCases">There were %d positive cases of COVID-19 reported in the last week</string>
     <string name="safetyTextNumReports">There are %d reports of any maskless people at this location</string>
+    <string name="title_activity_navigation">NavigationActivity</string>
 
 
 </resources>

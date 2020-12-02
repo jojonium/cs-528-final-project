@@ -47,12 +47,15 @@ class LoginActivity: AppCompatActivity() {
         }
 
         FirebaseAuth.getInstance().signInWithEmailAndPassword(useremail, userpassword)
-            .addOnCompleteListener{
-                if(!it.isSuccessful) return@addOnCompleteListener
-                Toast.makeText(this, "Log In Successful !", Toast.LENGTH_SHORT).show()
-            }.addOnFailureListener {
-                Toast.makeText(this, "Could not log in: ${it.message}", Toast.LENGTH_SHORT).show()
-            }
+                .addOnCompleteListener{
+                    if(!it.isSuccessful) return@addOnCompleteListener
+                    Toast.makeText(this, "Log In Successful !", Toast.LENGTH_SHORT).show()
+                }.addOnFailureListener {
+                    Toast.makeText(this, "Could not log in: ${it.message}", Toast.LENGTH_SHORT).show()
+                }.addOnSuccessListener {
+                    val intent = Intent(this, NavigationActivity::class.java)
+                    startActivity(intent)
+                }
 
     }
 
