@@ -42,5 +42,8 @@
     <!-- Profile Page -->
     <string name="signout"> Signout </string>
 
+    <!-- Upload Page -->
+    <string name="takePicture"> Take a picture! </string>
+
 
 </resources>
