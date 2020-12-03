@@ -65,7 +65,7 @@ class LocationHelper private constructor() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult) // why? this. is. retarded. Android.
-                val currentLocation: Location = locationResult.getLastLocation()
+                val currentLocation: Location = locationResult.lastLocation
                 val gpsPoint = LatLng(currentLocation.latitude, currentLocation.longitude)
                 Log.i(TAG, "Location Callback results: $gpsPoint")
                 callback(gpsPoint)
@@ -74,9 +74,11 @@ class LocationHelper private constructor() {
     }
 
     fun setupFusedLocationClient(activity: AppCompatActivity, requestCode: Int) {
-        mFusedLocationClient =
-            LocationServices.getFusedLocationProviderClient(activity)
-        requestLocationPermissions(activity, requestCode)
+        if (!this::mFusedLocationClient.isInitialized) {
+            mFusedLocationClient =
+                    LocationServices.getFusedLocationProviderClient(activity)
+            requestLocationPermissions(activity, requestCode)
+        }
     }
 
     fun requestLocationPermissions(activity: AppCompatActivity, requestCode: Int) {

@@ -14,7 +14,7 @@ import edu.wpi.cs528finalproject.location.LocationHelper
 
 class NavigationActivity : AppCompatActivity() {
 
-    public val ENABLE_LOCATION_MANAGER_REQUEST_CODE = 0
+    private val enableLocationManagerRequestCode = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -24,6 +24,7 @@ class NavigationActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
         navView.setupWithNavController(navController)
+        this.enableForegroundLocationFeatures(enableLocationManagerRequestCode)
     }
 
     override fun onBackPressed() {
@@ -36,7 +37,7 @@ class NavigationActivity : AppCompatActivity() {
     }
 
     private fun enableForegroundLocationFeatures(requestCode: Int) {
-        if (requestCode == ENABLE_LOCATION_MANAGER_REQUEST_CODE) {
+        if (requestCode == enableLocationManagerRequestCode) {
             LocationHelper.instance().setupFusedLocationClient(this, requestCode)
         }
     }
@@ -46,7 +47,7 @@ class NavigationActivity : AppCompatActivity() {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        if (requestCode == ENABLE_LOCATION_MANAGER_REQUEST_CODE) {
+        if (requestCode == enableLocationManagerRequestCode) {
             if (PermissionUtils.isPermissionGranted(permissions, grantResults,
                     Manifest.permission.ACCESS_FINE_LOCATION)) {
                 LocationHelper.instance().requestLocationPermissions(this, requestCode)
