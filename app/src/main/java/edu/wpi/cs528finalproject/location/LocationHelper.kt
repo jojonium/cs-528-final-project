@@ -30,6 +30,8 @@ class LocationHelper private constructor() {
     private val locationCallback: LocationCallback
     private val locationRequest: LocationRequest = LocationRequest()
     private val locationSettingsRequest: LocationSettingsRequest
+    var currentLocation: Location? = null
+        private set
     private var callback: (point: LatLng) -> Unit = {}
 
     fun onChange(workable: (point: LatLng) -> Unit) {
@@ -64,9 +66,10 @@ class LocationHelper private constructor() {
         locationSettingsRequest = builder.build()
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
-                super.onLocationResult(locationResult) // why? this. is. retarded. Android.
-                val currentLocation: Location = locationResult.lastLocation
-                val gpsPoint = LatLng(currentLocation.latitude, currentLocation.longitude)
+                super.onLocationResult(locationResult)
+                val loc = locationResult.lastLocation
+                currentLocation = loc
+                val gpsPoint = LatLng(loc.latitude, loc.longitude)
                 Log.i(TAG, "Location Callback results: $gpsPoint")
                 callback(gpsPoint)
             }
