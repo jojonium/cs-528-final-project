@@ -1,6 +1,12 @@
 <resources>
-    <!-- Login and Signup -->
     <string name="app_name">cs528finalproject</string>
+
+    <!-- Permissions -->
+    <string name="location_permission_required">Access to your location is required for location-based features.</string>
+    <string name="location_permission_rationale">We use your location to give you the most accurate COVID-19
+    case data for your area, and give you risk assessments for any place you might visit.</string>
+
+    <!-- Login and Signup -->
     <string name="x_text"> X </string>
     <string name="signup_text"> SignUp </string>
     <string name="signup_button"> Sign Up </string>
