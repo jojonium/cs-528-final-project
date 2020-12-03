@@ -44,6 +44,8 @@
 
     <!-- Upload Page -->
     <string name="takePicture"> Take a picture! </string>
+    <string name="noMask"> You are not wearing a mask </string>
+    <string name="mask"> You are wearing a mask </string>
 
 
 </resources>
