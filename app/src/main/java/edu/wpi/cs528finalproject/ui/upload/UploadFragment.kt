@@ -57,6 +57,8 @@ class UploadFragment : Fragment() {
             val takenImage = data?.extras?.get("data") as Bitmap
             imagePreviewView.setImageBitmap(takenImage)
             imagePreviewView.setVisibility(View.VISIBLE)
+
+            // CALL MACHINE LEARNING STUFF HERE
         }
         super.onActivityResult(requestCode, resultCode, data)
     }
