@@ -1,22 +1,16 @@
 package edu.wpi.cs528finalproject
 
 import android.Manifest
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.Intent
-import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.location.Location
-import android.location.LocationManager
 import android.os.Build
 import android.os.Bundle
-import android.os.Looper
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import edu.wpi.cs528finalproject.location.LocationHelper
 
 class NavigationActivity : AppCompatActivity() {
 
@@ -43,25 +37,7 @@ class NavigationActivity : AppCompatActivity() {
 
     private fun enableForegroundLocationFeatures(requestCode: Int) {
         if (requestCode == ENABLE_LOCATION_MANAGER_REQUEST_CODE) {
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.ACCESS_COARSE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                if (Build.VERSION.SDK_INT >= 23) {
-                    PermissionUtils.requestPermission(
-                        this, requestCode,
-                        Manifest.permission.ACCESS_FINE_LOCATION, false,
-                        R.string.location_permission_required,
-                        R.string.location_permission_rationale
-                    )
-                }
-            } else {
-                LocationManager.Companion
-            }
+            LocationHelper.instance().setupFusedLocationClient(this, requestCode)
         }
     }
 
@@ -70,6 +46,12 @@ class NavigationActivity : AppCompatActivity() {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
+        if (requestCode == ENABLE_LOCATION_MANAGER_REQUEST_CODE) {
+            if (PermissionUtils.isPermissionGranted(permissions, grantResults,
+                    Manifest.permission.ACCESS_FINE_LOCATION)) {
+                LocationHelper.instance().requestLocationPermissions(this, requestCode)
+            }
+        }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
     }
 }

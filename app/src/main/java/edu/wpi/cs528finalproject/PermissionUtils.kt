@@ -60,7 +60,7 @@ object PermissionUtils {
      * @see androidx.core.app.ActivityCompat.OnRequestPermissionsResultCallback
      */
     fun isPermissionGranted(
-        grantPermissions: Array<String>, grantResults: IntArray,
+        grantPermissions: Array<out String>, grantResults: IntArray,
         permission: String
     ): Boolean {
         for (i in grantPermissions.indices) {
