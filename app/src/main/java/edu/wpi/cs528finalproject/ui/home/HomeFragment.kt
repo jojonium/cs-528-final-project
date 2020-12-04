@@ -2,8 +2,10 @@ package edu.wpi.cs528finalproject.ui.home
 
 import android.Manifest
 import android.content.pm.PackageManager
+import android.location.Geocoder
 import android.os.Build
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -11,6 +13,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.beust.klaxon.Klaxon
+import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.FuelError
+import com.github.kittinunf.fuel.core.Request
+import com.github.kittinunf.fuel.core.Response
+import com.github.kittinunf.fuel.core.extensions.jsonBody
+import com.github.kittinunf.result.Result
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
@@ -22,7 +31,10 @@ import com.google.android.gms.maps.model.PointOfInterest
 import edu.wpi.cs528finalproject.PermissionRequestCodes
 import edu.wpi.cs528finalproject.PermissionUtils
 import edu.wpi.cs528finalproject.R
+import edu.wpi.cs528finalproject.location.CityData
 import edu.wpi.cs528finalproject.location.LocationHelper
+import java.lang.Error
+import java.util.*
 
 const val defaultZoom: Float = 16.0F
 
@@ -34,6 +46,7 @@ GoogleMap.OnMapClickListener {
     private var mapView: MapView? = null
     private var marker: Marker? = null
     private var selectedPoi: PointOfInterest? = null
+    private var previousCity = ""
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,20 +60,63 @@ GoogleMap.OnMapClickListener {
         mapView = root.findViewById(R.id.mapView)
         mapView?.onCreate(savedInstanceState)
         mapView?.getMapAsync(this)
-//        val textView: TextView = root.findViewById(R.id.text_home)
-//        homeViewModel.text.observe(viewLifecycleOwner, Observer {
-//            textView.text = it
-//        })
+        LocationHelper.instance().onChange {
+            val geocoder = Geocoder(this.requireContext(), Locale.getDefault())
+            val address = geocoder.getFromLocation(it.latitude, it.longitude, 1)[0]
+            val city = address.locality
+            if (city != previousCity) {
+                previousCity = city
+                Fuel.post("http://covidtraveler-env.eba-2ze4syip.us-east-2.elasticbeanstalk.com/")
+                        .jsonBody("{ \"town\": \"$city\" }")
+                        .response { request, response, result ->
+                            this.handleCityDataResponse(request, response, result)
+                        }
+            }
+        }
         return root
+    }
+
+    private fun handleCityDataResponse(request: Request, response: Response, result: Result<ByteArray, FuelError>) {
+        val (bytes, error) = result
+        if (bytes == null || error != null) {
+            displayDataError("An error occurred while fetching COVID data from the network.")
+            Log.e("CityAPI", error.toString())
+            return;
+        }
+        if (response.statusCode == 404 || bytes.isEmpty()) {
+            displayDataError("No COVID data is available for your current location.")
+            return;
+        }
+        val json = String(response.data)
+        Log.d("CityAPI", json)
+        var cityData: CityData? = null
+        try {
+            cityData = Klaxon()
+                    .parseArray<CityData>(json)?.get(0) ?: throw Error("cityData is null")
+        } catch (error: Error) {
+            Log.e("CityAPI", error.toString())
+            displayDataError("Received an invalid response from the server.")
+            return;
+        }
+        displayCityData(cityData)
+    }
+
+    private fun displayCityData(cityData: CityData) {
+        // TODO implement
+    }
+
+    private fun displayDataError(message: String) {
+        Log.e("CityAPI", "ERR: $message")
+        // TODO implement
     }
 
     fun requestLocationPermissions() {
         if (mMap == null) return
         if (ActivityCompat.checkSelfPermission(
-                this.requireContext(),
-                Manifest.permission.ACCESS_FINE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                this.requireContext(),
+                        this.requireContext(),
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                        this.requireContext(),
                 Manifest.permission.ACCESS_COARSE_LOCATION
             ) != PackageManager.PERMISSION_GRANTED
         ) {
