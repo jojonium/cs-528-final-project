@@ -14,9 +14,12 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationResult
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.location.LocationSettingsRequest
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.model.LatLng
 import edu.wpi.cs528finalproject.PermissionUtils
 import edu.wpi.cs528finalproject.R
+import edu.wpi.cs528finalproject.ui.home.defaultZoom
 
 
 /**
@@ -30,6 +33,9 @@ class LocationHelper private constructor() {
     private val locationCallback: LocationCallback
     private val locationRequest: LocationRequest = LocationRequest()
     private val locationSettingsRequest: LocationSettingsRequest
+
+    private var googleMap: GoogleMap? = null
+
     var currentLocation: Location? = null
         private set
     private var callback: (point: LatLng) -> Unit = {}
@@ -55,6 +61,10 @@ class LocationHelper private constructor() {
         fun instance(): LocationHelper {
             return instance
         }
+        fun instance(googleMap: GoogleMap?): LocationHelper {
+            instance.googleMap = googleMap
+            return instance
+        }
     }
 
     init {
@@ -67,10 +77,21 @@ class LocationHelper private constructor() {
         locationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
                 super.onLocationResult(locationResult)
+                val noPrevLocation: Boolean = currentLocation == null
                 val loc = locationResult.lastLocation
                 currentLocation = loc
                 val gpsPoint = LatLng(loc.latitude, loc.longitude)
                 Log.i(TAG, "Location Callback results: $gpsPoint")
+                if (noPrevLocation) {
+                    googleMap?.moveCamera(
+                        CameraUpdateFactory.newLatLngZoom(
+                            LatLng(
+                                loc.latitude,
+                                loc.longitude
+                            ), defaultZoom
+                        )
+                    )
+                }
                 callback(gpsPoint)
             }
         }

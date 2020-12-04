@@ -2,7 +2,6 @@ package edu.wpi.cs528finalproject.ui.home
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -22,11 +21,11 @@ import edu.wpi.cs528finalproject.PermissionUtils
 import edu.wpi.cs528finalproject.R
 import edu.wpi.cs528finalproject.location.LocationHelper
 
+const val defaultZoom: Float = 16.0F
 
 class HomeFragment : Fragment(), OnMapReadyCallback {
 
     private lateinit var homeViewModel: HomeViewModel
-    private val defaultZoom: Float = 16.0F
     private var googleMap: GoogleMap? = null
     private var mapView: MapView? = null
 
@@ -49,7 +48,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
         return root
     }
 
-    fun checkLocationPermissions() {
+    fun requestLocationPermissions() {
         if (googleMap == null) return
         if (ActivityCompat.checkSelfPermission(
                 this.requireContext(),
@@ -69,7 +68,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
             }
         } else {
             googleMap?.isMyLocationEnabled = true
-            val loc = LocationHelper.instance().currentLocation
+            val loc = LocationHelper.instance(googleMap).currentLocation
             if (loc != null) {
                 googleMap?.moveCamera(
                     CameraUpdateFactory.newLatLngZoom(
@@ -85,7 +84,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
 
     override fun onMapReady(googleMap: GoogleMap?) {
         this.googleMap = googleMap
-        checkLocationPermissions()
+        requestLocationPermissions()
     }
 
     override fun onResume() {

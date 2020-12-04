@@ -1,8 +1,6 @@
 package edu.wpi.cs528finalproject
 
 import android.Manifest
-import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
@@ -55,7 +53,7 @@ class NavigationActivity : AppCompatActivity() {
                     if (DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] == true) {
                         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
                         val homeFragment = navHostFragment.childFragmentManager.primaryNavigationFragment as HomeFragment
-                        homeFragment.checkLocationPermissions()
+                        homeFragment.requestLocationPermissions()
                         DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] = false
                     }
                 } else {
@@ -66,7 +64,7 @@ class NavigationActivity : AppCompatActivity() {
                         Manifest.permission.ACCESS_FINE_LOCATION)) {
                     val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
                     val homeFragment = navHostFragment.childFragmentManager.primaryNavigationFragment as HomeFragment
-                    homeFragment.checkLocationPermissions()
+                    homeFragment.requestLocationPermissions()
                     if (DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationHelper] == true) {
                         LocationHelper.instance().requestLocationPermissions(this, requestCode)
                         DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationHelper] = false
