@@ -16,6 +16,9 @@ import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
 import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.Marker
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.PointOfInterest
 import edu.wpi.cs528finalproject.PermissionRequestCodes
 import edu.wpi.cs528finalproject.PermissionUtils
 import edu.wpi.cs528finalproject.R
@@ -23,11 +26,14 @@ import edu.wpi.cs528finalproject.location.LocationHelper
 
 const val defaultZoom: Float = 16.0F
 
-class HomeFragment : Fragment(), OnMapReadyCallback {
+class HomeFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnPoiClickListener,
+GoogleMap.OnMapClickListener {
 
     private lateinit var homeViewModel: HomeViewModel
-    private var googleMap: GoogleMap? = null
+    private var mMap: GoogleMap? = null
     private var mapView: MapView? = null
+    private var marker: Marker? = null
+    private var selectedPoi: PointOfInterest? = null
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -49,7 +55,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
     }
 
     fun requestLocationPermissions() {
-        if (googleMap == null) return
+        if (mMap == null) return
         if (ActivityCompat.checkSelfPermission(
                 this.requireContext(),
                 Manifest.permission.ACCESS_FINE_LOCATION
@@ -67,10 +73,10 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
                 )
             }
         } else {
-            googleMap?.isMyLocationEnabled = true
-            val loc = LocationHelper.instance(googleMap).currentLocation
+            mMap?.isMyLocationEnabled = true
+            val loc = LocationHelper.instance(mMap).currentLocation
             if (loc != null) {
-                googleMap?.moveCamera(
+                mMap?.moveCamera(
                     CameraUpdateFactory.newLatLngZoom(
                         LatLng(
                             loc.latitude,
@@ -82,9 +88,30 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
         }
     }
 
+    // TODO: Add geocoding to background service to detect when user enters a new town
     override fun onMapReady(googleMap: GoogleMap?) {
-        this.googleMap = googleMap
+        mMap = googleMap
+        mMap?.setOnPoiClickListener(this)
+        mMap?.setOnMapClickListener(this)
         requestLocationPermissions()
+    }
+
+    override fun onMapClick(latLng: LatLng) {
+        marker?.remove()
+        marker = null
+        selectedPoi = null
+    }
+
+    override fun onPoiClick(poi: PointOfInterest) {
+        selectedPoi = poi
+        marker = mMap!!.addMarker(
+            // TODO: Add COVID data to marker info window
+            MarkerOptions()
+                .position(poi.latLng)
+        )
+        mMap?.moveCamera(
+            CameraUpdateFactory.newLatLngZoom(poi.latLng, defaultZoom)
+        )
     }
 
     override fun onResume() {

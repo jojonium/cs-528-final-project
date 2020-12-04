@@ -34,7 +34,7 @@ class LocationHelper private constructor() {
     private val locationRequest: LocationRequest = LocationRequest()
     private val locationSettingsRequest: LocationSettingsRequest
 
-    private var googleMap: GoogleMap? = null
+    private var mMap: GoogleMap? = null
 
     var currentLocation: Location? = null
         private set
@@ -62,7 +62,7 @@ class LocationHelper private constructor() {
             return instance
         }
         fun instance(googleMap: GoogleMap?): LocationHelper {
-            instance.googleMap = googleMap
+            instance.mMap = googleMap
             return instance
         }
     }
@@ -83,7 +83,7 @@ class LocationHelper private constructor() {
                 val gpsPoint = LatLng(loc.latitude, loc.longitude)
                 Log.i(TAG, "Location Callback results: $gpsPoint")
                 if (noPrevLocation) {
-                    googleMap?.moveCamera(
+                    mMap?.moveCamera(
                         CameraUpdateFactory.newLatLngZoom(
                             LatLng(
                                 loc.latitude,
