@@ -1,6 +1,7 @@
 package edu.wpi.cs528finalproject.ui.home
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.os.Build
@@ -9,6 +10,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.fragment.app.Fragment
@@ -33,30 +35,36 @@ import edu.wpi.cs528finalproject.PermissionUtils
 import edu.wpi.cs528finalproject.R
 import edu.wpi.cs528finalproject.location.CityData
 import edu.wpi.cs528finalproject.location.LocationHelper
-import java.lang.Error
 import java.util.*
 
 const val defaultZoom: Float = 16.0F
+const val updateCasesAction = "UPDATE_CASES"
 
-class HomeFragment : Fragment(), OnMapReadyCallback, GoogleMap.OnPoiClickListener,
-GoogleMap.OnMapClickListener {
+class HomeFragment :
+        Fragment(),
+        OnMapReadyCallback,
+        GoogleMap.OnPoiClickListener,
+        GoogleMap.OnMapClickListener {
 
     private lateinit var homeViewModel: HomeViewModel
     private var mMap: GoogleMap? = null
     private var mapView: MapView? = null
+    private lateinit var alertTextNumCasesView: TextView
     private var marker: Marker? = null
     private var selectedPoi: PointOfInterest? = null
     private var previousCity = ""
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+            inflater: LayoutInflater,
+            container: ViewGroup?,
+            savedInstanceState: Bundle?
     ): View? {
         homeViewModel =
-            ViewModelProvider(this).get(HomeViewModel::class.java)
+                ViewModelProvider(this).get(HomeViewModel::class.java)
 
         val root = inflater.inflate(R.layout.fragment_home, container, false)
+
+        alertTextNumCasesView = root.findViewById(R.id.alertTextNumCases)
         mapView = root.findViewById(R.id.mapView)
         mapView?.onCreate(savedInstanceState)
         mapView?.getMapAsync(this)
@@ -102,12 +110,16 @@ GoogleMap.OnMapClickListener {
     }
 
     private fun displayCityData(cityData: CityData) {
-        // TODO implement
+        activity?.runOnUiThread(Runnable {
+            alertTextNumCasesView.text = resources.getString(R.string.safetyTextNumCases, cityData.twoWeekCaseCounts)
+        })
     }
 
     private fun displayDataError(message: String) {
         Log.e("CityAPI", "ERR: $message")
-        // TODO implement
+        activity?.runOnUiThread(Runnable {
+            alertTextNumCasesView.text = message
+        })
     }
 
     fun requestLocationPermissions() {
@@ -117,15 +129,15 @@ GoogleMap.OnMapClickListener {
                         Manifest.permission.ACCESS_FINE_LOCATION
                 ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
                         this.requireContext(),
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ) != PackageManager.PERMISSION_GRANTED
+                        Manifest.permission.ACCESS_COARSE_LOCATION
+                ) != PackageManager.PERMISSION_GRANTED
         ) {
             if (Build.VERSION.SDK_INT >= 23) {
                 PermissionUtils.requestPermission(
-                    this.requireActivity() as AppCompatActivity, PermissionRequestCodes.enableMapView,
-                    Manifest.permission.ACCESS_FINE_LOCATION, false,
-                    R.string.location_permission_required,
-                    R.string.location_permission_rationale
+                        this.requireActivity() as AppCompatActivity, PermissionRequestCodes.enableMapView,
+                        Manifest.permission.ACCESS_FINE_LOCATION, false,
+                        R.string.location_permission_required,
+                        R.string.location_permission_rationale
                 )
             }
         } else {
@@ -133,12 +145,12 @@ GoogleMap.OnMapClickListener {
             val loc = LocationHelper.instance(mMap).currentLocation
             if (loc != null) {
                 mMap?.moveCamera(
-                    CameraUpdateFactory.newLatLngZoom(
-                        LatLng(
-                            loc.latitude,
-                            loc.longitude
-                        ), defaultZoom
-                    )
+                        CameraUpdateFactory.newLatLngZoom(
+                                LatLng(
+                                        loc.latitude,
+                                        loc.longitude
+                                ), defaultZoom
+                        )
                 )
             }
         }
@@ -161,12 +173,12 @@ GoogleMap.OnMapClickListener {
     override fun onPoiClick(poi: PointOfInterest) {
         selectedPoi = poi
         marker = mMap!!.addMarker(
-            // TODO: Add COVID data to marker info window
-            MarkerOptions()
-                .position(poi.latLng)
+                // TODO: Add COVID data to marker info window
+                MarkerOptions()
+                        .position(poi.latLng)
         )
         mMap?.moveCamera(
-            CameraUpdateFactory.newLatLngZoom(poi.latLng, defaultZoom)
+                CameraUpdateFactory.newLatLngZoom(poi.latLng, defaultZoom)
         )
     }
 

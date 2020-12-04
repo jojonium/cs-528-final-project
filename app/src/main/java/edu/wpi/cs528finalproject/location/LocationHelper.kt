@@ -42,6 +42,7 @@ class LocationHelper private constructor() {
 
     fun onChange(workable: (point: LatLng) -> Unit) {
         this.callback = workable
+
     }
 
     fun getLocationSettingsRequest(): LocationSettingsRequest {
@@ -49,7 +50,7 @@ class LocationHelper private constructor() {
     }
 
     fun stop() {
-        Log.i(TAG, "stop() Stopping location tracking")
+        Log.v(TAG, "stop() Stopping location tracking")
         mFusedLocationClient.removeLocationUpdates(locationCallback)
     }
 
@@ -81,7 +82,7 @@ class LocationHelper private constructor() {
                 val loc = locationResult.lastLocation
                 currentLocation = loc
                 val gpsPoint = LatLng(loc.latitude, loc.longitude)
-                Log.i(TAG, "Location Callback results: $gpsPoint")
+                Log.v(TAG, "Location Callback results: $gpsPoint")
                 if (noPrevLocation) {
                     mMap?.moveCamera(
                         CameraUpdateFactory.newLatLngZoom(

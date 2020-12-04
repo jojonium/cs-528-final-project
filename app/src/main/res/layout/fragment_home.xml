@@ -71,8 +71,8 @@
                 android:layout_marginTop="5sp"
                 android:layout_marginEnd="5sp"
                 android:background="@drawable/circle"
-                android:backgroundTint="#FF0000"
-                android:orientation="vertical" >
+                android:backgroundTint="#00000000"
+                android:orientation="vertical">
 
             </LinearLayout>
 
@@ -85,23 +85,25 @@
                     android:id="@+id/alertTextZone"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/safetyTextZone"
                     android:textColor="#000000"
                     android:textSize="18sp" />
 
                 <TextView
                     android:id="@+id/alertTextNumCases"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
                     android:layout_marginTop="10sp"
                     android:layout_marginBottom="10sp"
-                    android:text="@string/safetyTextNumCases" />
+                    android:text="@string/safetyTextLoading"
+                    android:textAlignment="textStart" />
 
+                <!--
                 <TextView
                     android:id="@+id/alertTextNumReports"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="@string/safetyTextNumReports" />
+                -->
             </LinearLayout>
 
         </LinearLayout>

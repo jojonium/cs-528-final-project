@@ -40,8 +40,9 @@
     <string name="checkin"> Check In </string>
     <string name="covidSafety">COVID Safety</string>
     <string name="safetyTextZone">Red Zone</string>
-    <string name="safetyTextNumCases">There were %d positive cases of COVID-19 reported in the last week</string>
-    <string name="safetyTextNumReports">There are %d reports of any maskless people at this location</string>
+    <string name="safetyTextLoading">Fetching COVID-19 data for your location…</string>
+    <string name="safetyTextNumCases">There were %d positive cases of COVID-19 reported in the last two weeks.</string>
+    <string name="safetyTextNumReports">There are %d reports of any maskless people at this location.</string>
     <string name="title_activity_navigation">NavigationActivity</string>
 
 
