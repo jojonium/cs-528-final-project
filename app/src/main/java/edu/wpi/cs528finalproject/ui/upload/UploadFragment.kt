@@ -69,7 +69,6 @@ class UploadFragment : Fragment() {
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 correctlyWearingMaskCounter = (dataSnapshot.child("correctlyWearingMaskCounter")?.getValue() ?: 0L) as Long
                 numberOfTimesPromptedToWearMask = (dataSnapshot.child("numberOfTimesPromptedToWearMask")?.getValue() ?: 0L) as Long
-                Log.d(null, "hi")
             }
         }
         val ref = database.child("maskWearing").child(currentFirebaseUser)

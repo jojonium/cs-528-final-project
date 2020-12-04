@@ -45,7 +45,8 @@
     <string name="changePassword"> Change Password </string>
     <string name="percentileNum"> %d </string>
     <string name="percentile"> You are in the %dth percentile of users </string>
-    <string name="statsSentence"> Keep it going! You have uploaded a picture of yourself wearing a mask %d percent of the time! </string>
+    <string name="statsSentence"> Keep it going! You have uploaded a picture of yourself wearing a mask %.2f percent of the time! </string>
+    <string name="noDataSentence"> You have not submitted any mask wearing pictures yet!</string>
 
     <!-- Upload Page -->
     <string name="takePicture"> Take a picture! </string>
