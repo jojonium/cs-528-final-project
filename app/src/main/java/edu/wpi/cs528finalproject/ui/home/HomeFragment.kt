@@ -39,7 +39,7 @@ class HomeFragment : Fragment(), OnMapReadyCallback {
             ViewModelProvider(this).get(HomeViewModel::class.java)
 
         val root = inflater.inflate(R.layout.fragment_home, container, false)
-        mapView = root.findViewById<MapView>(R.id.mapView)
+        mapView = root.findViewById(R.id.mapView)
         mapView?.onCreate(savedInstanceState)
         mapView?.getMapAsync(this)
 //        val textView: TextView = root.findViewById(R.id.text_home)

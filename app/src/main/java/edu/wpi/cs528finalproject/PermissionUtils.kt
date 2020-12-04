@@ -26,8 +26,16 @@ import androidx.fragment.app.DialogFragment
 // limitations under the License.
 
 object PermissionRequestCodes {
-    val enableLocationHelper = 0
-    val enableMapView = 1
+    const val enableLocationHelper = 0
+    const val enableMapView = 1
+}
+
+object DeferredPermissions {
+    var deferredMap = mutableMapOf<Int, Boolean>()
+    init {
+        deferredMap[PermissionRequestCodes.enableLocationHelper] = false
+        deferredMap[PermissionRequestCodes.enableMapView] = false
+    }
 }
 
 /**
@@ -156,7 +164,7 @@ object PermissionUtils {
                 .setMessage(rationaleResourceID)
                 .setPositiveButton(
                     android.R.string.ok
-                ) { dialog, which -> // After click on Ok, request the permission.
+                ) { _, _ -> // After click on Ok, request the permission.
                     ActivityCompat.requestPermissions(
                         requireActivity(), arrayOf(permission),
                         requestCode

@@ -6,7 +6,6 @@ import android.os.Build
 import android.os.Bundle
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
 import com.google.android.material.bottomnavigation.BottomNavigationView
@@ -46,16 +45,35 @@ class NavigationActivity : AppCompatActivity() {
         permissions: Array<out String>,
         grantResults: IntArray
     ) {
-        if (requestCode == PermissionRequestCodes.enableLocationHelper) {
-            if (PermissionUtils.isPermissionGranted(permissions, grantResults,
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-                LocationHelper.instance().requestLocationPermissions(this, requestCode)
-            }
-        } else if (requestCode == PermissionRequestCodes.enableMapView) {
-            if (PermissionUtils.isPermissionGranted(permissions, grantResults,
-                    Manifest.permission.ACCESS_FINE_LOCATION)) {
-                val homeFragment = supportFragmentManager.findFragmentById(R.id.navigation_home) as HomeFragment?
-                homeFragment?.checkLocationPermissions()
+        if (permissions.isEmpty()) {
+            DeferredPermissions.deferredMap[requestCode] = true
+        } else {
+            if (requestCode == PermissionRequestCodes.enableLocationHelper) {
+                if (PermissionUtils.isPermissionGranted(permissions, grantResults,
+                        Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    LocationHelper.instance().requestLocationPermissions(this, requestCode)
+                    if (DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] == true) {
+                        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                        val homeFragment = navHostFragment.childFragmentManager.primaryNavigationFragment as HomeFragment
+                        homeFragment.checkLocationPermissions()
+                        DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] = false
+                    }
+                } else {
+                    DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] = false
+                }
+            } else if (requestCode == PermissionRequestCodes.enableMapView) {
+                if (PermissionUtils.isPermissionGranted(permissions, grantResults,
+                        Manifest.permission.ACCESS_FINE_LOCATION)) {
+                    val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                    val homeFragment = navHostFragment.childFragmentManager.primaryNavigationFragment as HomeFragment
+                    homeFragment.checkLocationPermissions()
+                    if (DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationHelper] == true) {
+                        LocationHelper.instance().requestLocationPermissions(this, requestCode)
+                        DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationHelper] = false
+                    }
+                } else {
+                    DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationHelper] = false
+                }
             }
         }
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
