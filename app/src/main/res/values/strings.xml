@@ -41,6 +41,11 @@
 
     <!-- Profile Page -->
     <string name="signout"> Signout </string>
+    <string name="update"> Update </string>
+    <string name="changePassword"> Change Password </string>
+    <string name="percentileNum"> %d </string>
+    <string name="percentile"> You are in the %dth percentile of users </string>
+    <string name="statsSentence"> Keep it going! You have uploaded a picture of yourself wearing a mask %d percent of the time! </string>
 
     <!-- Upload Page -->
     <string name="takePicture"> Take a picture! </string>
