@@ -1,9 +1,9 @@
 package edu.wpi.cs528finalproject.ui.home
 
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
+import android.location.Location
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
@@ -18,7 +18,6 @@ import androidx.lifecycle.ViewModelProvider
 import com.beust.klaxon.Klaxon
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.FuelError
-import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.core.extensions.jsonBody
 import com.github.kittinunf.result.Result
@@ -30,15 +29,9 @@ import com.google.android.gms.maps.model.LatLng
 import com.google.android.gms.maps.model.Marker
 import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PointOfInterest
-import edu.wpi.cs528finalproject.PermissionRequestCodes
-import edu.wpi.cs528finalproject.PermissionUtils
-import edu.wpi.cs528finalproject.R
+import edu.wpi.cs528finalproject.*
 import edu.wpi.cs528finalproject.location.CityData
-import edu.wpi.cs528finalproject.location.LocationHelper
 import java.util.*
-
-const val defaultZoom: Float = 16.0F
-const val updateCasesAction = "UPDATE_CASES"
 
 class HomeFragment :
         Fragment(),
@@ -49,10 +42,13 @@ class HomeFragment :
     private lateinit var homeViewModel: HomeViewModel
     private var mMap: GoogleMap? = null
     private var mapView: MapView? = null
+    private val defaultZoom: Float = 16.0F
     private lateinit var alertTextNumCasesView: TextView
     private var marker: Marker? = null
     private var selectedPoi: PointOfInterest? = null
     private var previousCity = ""
+    private var currentLocation: Location? = null
+
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -65,26 +61,42 @@ class HomeFragment :
         val root = inflater.inflate(R.layout.fragment_home, container, false)
 
         alertTextNumCasesView = root.findViewById(R.id.alertTextNumCases)
+
         mapView = root.findViewById(R.id.mapView)
         mapView?.onCreate(savedInstanceState)
         mapView?.getMapAsync(this)
-        LocationHelper.instance().onChange {
-            val geocoder = Geocoder(this.requireContext(), Locale.getDefault())
-            val address = geocoder.getFromLocation(it.latitude, it.longitude, 1)[0]
-            val city = address.locality
-            if (city != previousCity) {
-                previousCity = city
-                Fuel.post("http://covidtraveler-env.eba-2ze4syip.us-east-2.elasticbeanstalk.com/")
-                        .jsonBody("{ \"town\": \"$city\" }")
-                        .response { request, response, result ->
-                            this.handleCityDataResponse(request, response, result)
-                        }
+        (requireActivity() as NavigationActivity).addOnLocationChangedListener(object: LocationChangedListener {
+            override fun onLocationChanged(location: Location?) {
+                if (location != null) {
+                    val geocoder = Geocoder(requireContext(), Locale.getDefault())
+                    val address = geocoder.getFromLocation(location.latitude, location.longitude, 1)[0]
+                    val city = address.locality
+                    if (city != previousCity) {
+                        previousCity = city
+                        Fuel.post("http://covidtraveler-env.eba-2ze4syip.us-east-2.elasticbeanstalk.com/")
+                            .jsonBody("{ \"town\": \"$city\" }")
+                            .response { _, response, result ->
+                                handleCityDataResponse(response, result)
+                            }
+                    }
+                    if (currentLocation == null) {
+                        mMap?.moveCamera(
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(
+                                    location.latitude,
+                                    location.longitude
+                                ), defaultZoom
+                            )
+                        )
+                    }
+                    currentLocation = location
+                }
             }
-        }
+        })
         return root
     }
 
-    private fun handleCityDataResponse(request: Request, response: Response, result: Result<ByteArray, FuelError>) {
+    private fun handleCityDataResponse(response: Response, result: Result<ByteArray, FuelError>) {
         val (bytes, error) = result
         if (bytes == null || error != null) {
             displayDataError("An error occurred while fetching COVID data from the network.")
@@ -97,7 +109,7 @@ class HomeFragment :
         }
         val json = String(response.data)
         Log.d("CityAPI", json)
-        var cityData: CityData? = null
+        val cityData: CityData?
         try {
             cityData = Klaxon()
                     .parseArray<CityData>(json)?.get(0) ?: throw Error("cityData is null")
@@ -142,21 +154,9 @@ class HomeFragment :
             }
         } else {
             mMap?.isMyLocationEnabled = true
-            val loc = LocationHelper.instance(mMap).currentLocation
-            if (loc != null) {
-                mMap?.moveCamera(
-                        CameraUpdateFactory.newLatLngZoom(
-                                LatLng(
-                                        loc.latitude,
-                                        loc.longitude
-                                ), defaultZoom
-                        )
-                )
-            }
         }
     }
 
-    // TODO: Add geocoding to background service to detect when user enters a new town
     override fun onMapReady(googleMap: GoogleMap?) {
         mMap = googleMap
         mMap?.setOnPoiClickListener(this)

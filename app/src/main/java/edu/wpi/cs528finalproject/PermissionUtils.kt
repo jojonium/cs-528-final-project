@@ -26,14 +26,14 @@ import androidx.fragment.app.DialogFragment
 // limitations under the License.
 
 object PermissionRequestCodes {
-    const val enableLocationHelper = 0
+    const val enableLocationUpdatesService = 0
     const val enableMapView = 1
 }
 
 object DeferredPermissions {
     var deferredMap = mutableMapOf<Int, Boolean>()
     init {
-        deferredMap[PermissionRequestCodes.enableLocationHelper] = false
+        deferredMap[PermissionRequestCodes.enableLocationUpdatesService] = false
         deferredMap[PermissionRequestCodes.enableMapView] = false
     }
 }
