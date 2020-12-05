@@ -31,6 +31,7 @@ import com.google.android.gms.maps.model.MarkerOptions
 import com.google.android.gms.maps.model.PointOfInterest
 import edu.wpi.cs528finalproject.*
 import edu.wpi.cs528finalproject.location.CityData
+import edu.wpi.cs528finalproject.location.CityDataWrapper
 import java.util.*
 
 class HomeFragment :
@@ -44,6 +45,8 @@ class HomeFragment :
     private var mapView: MapView? = null
     private val defaultZoom: Float = 16.0F
     private lateinit var alertTextNumCasesView: TextView
+    private lateinit var alertTextZoneView: TextView
+    private lateinit var alertCircle: View
     private var marker: Marker? = null
     private var selectedPoi: PointOfInterest? = null
     private var previousCity = ""
@@ -61,11 +64,13 @@ class HomeFragment :
         val root = inflater.inflate(R.layout.fragment_home, container, false)
 
         alertTextNumCasesView = root.findViewById(R.id.alertTextNumCases)
+        alertTextZoneView = root.findViewById(R.id.alertTextZone)
+        alertCircle = root.findViewById(R.id.alertCircle)
 
         mapView = root.findViewById(R.id.mapView)
         mapView?.onCreate(savedInstanceState)
         mapView?.getMapAsync(this)
-        (requireActivity() as NavigationActivity).addOnLocationChangedListener(object: LocationChangedListener {
+        (requireActivity() as NavigationActivity).addOnLocationChangedListener(object : LocationChangedListener {
             override fun onLocationChanged(location: Location?) {
                 if (location != null) {
                     val geocoder = Geocoder(requireContext(), Locale.getDefault())
@@ -74,19 +79,19 @@ class HomeFragment :
                     if (city != previousCity) {
                         previousCity = city
                         Fuel.post("http://covidtraveler-env.eba-2ze4syip.us-east-2.elasticbeanstalk.com/")
-                            .jsonBody("{ \"town\": \"$city\" }")
-                            .response { _, response, result ->
-                                handleCityDataResponse(response, result)
-                            }
+                                .jsonBody("{ \"town\": \"$city\" }")
+                                .response { _, response, result ->
+                                    handleCityDataResponse(response, result)
+                                }
                     }
                     if (currentLocation == null) {
                         mMap?.moveCamera(
-                            CameraUpdateFactory.newLatLngZoom(
-                                LatLng(
-                                    location.latitude,
-                                    location.longitude
-                                ), defaultZoom
-                            )
+                                CameraUpdateFactory.newLatLngZoom(
+                                        LatLng(
+                                                location.latitude,
+                                                location.longitude
+                                        ), defaultZoom
+                                )
                         )
                     }
                     currentLocation = location
@@ -111,8 +116,12 @@ class HomeFragment :
         Log.d("CityAPI", json)
         val cityData: CityData?
         try {
+            val cityDataWrapper = Klaxon()
+                    .parse<CityDataWrapper>(json) ?: throw Error("cityDataWrapper is null")
             cityData = Klaxon()
-                    .parseArray<CityData>(json)?.get(0) ?: throw Error("cityData is null")
+                    .parseArray<CityData>(cityDataWrapper.body)?.get(0)
+                    ?: throw Error("cityData is null")
+
         } catch (error: Error) {
             Log.e("CityAPI", error.toString())
             displayDataError("Received an invalid response from the server.")
@@ -122,16 +131,27 @@ class HomeFragment :
     }
 
     private fun displayCityData(cityData: CityData) {
-        activity?.runOnUiThread(Runnable {
+        activity?.runOnUiThread {
             alertTextNumCasesView.text = resources.getString(R.string.safetyTextNumCases, cityData.twoWeekCaseCounts)
-        })
+            alertTextZoneView.text = resources.getString(R.string.safetyTextThreatLevel, cityData.covidLevel)
+            alertCircle.background.setTint(
+                    mapOf(
+                            "Red" to 0xFFFF0000,
+                            "Yellow" to 0xFFFFFF00,
+                            "Green" to 0xFF008000,
+                            "Grey" to 0xFF808080
+                    )[cityData.covidLevel]?.toInt() ?: 0
+            )
+        }
     }
 
     private fun displayDataError(message: String) {
         Log.e("CityAPI", "ERR: $message")
-        activity?.runOnUiThread(Runnable {
+        activity?.runOnUiThread {
             alertTextNumCasesView.text = message
-        })
+            alertTextZoneView.text = ""
+            alertCircle.background.setTint(0)
+        }
     }
 
     fun requestLocationPermissions() {

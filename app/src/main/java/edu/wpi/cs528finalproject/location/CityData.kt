@@ -22,5 +22,13 @@ class CityData(
     @Json(name="Percent Positivity")
     val percentPositivity: Double = 0.0,
     @Json(name="Change Since Last Week")
-    val changeSinceLastWeek: String = "Unknown"
+    val changeSinceLastWeek: String = "Unknown",
+    @Json(name="Covid_Level")
+    val covidLevel: String = "Unknown"
 )
+
+class CityDataWrapper(
+    val body: String,
+    val statusCode: Int
+)
+

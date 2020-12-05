@@ -41,6 +41,7 @@
     <string name="covidSafety">COVID Safety</string>
     <string name="safetyTextLoading">Fetching COVID-19 data for your location…</string>
     <string name="safetyTextNumCases">There were %d positive cases of COVID-19 reported in the last two weeks.</string>
+    <string name="safetyTextThreatLevel">Threat Level: %s</string>
     <string name="title_activity_navigation">NavigationActivity</string>
 
     <!-- Profile Page -->
