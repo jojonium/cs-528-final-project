@@ -372,7 +372,7 @@ class LocationUpdatesService : Service() {
         /**
          * The desired interval for location updates. Inexact. Updates may be more or less frequent.
          */
-        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 10000
+        private const val UPDATE_INTERVAL_IN_MILLISECONDS: Long = 30000
 
         /**
          * The fastest rate for active location updates. Updates will never be more frequent
