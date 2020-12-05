@@ -34,7 +34,7 @@ class ReportFragment : Fragment() {
 //            textView.text = it
 //        })
 
-        val reportButton = root.findViewById<Button>(R.id.button);
+        val reportButton = root.findViewById<Button>(R.id.button)
         database = Firebase.database.reference
 
         reportButton.setOnClickListener{
@@ -45,10 +45,10 @@ class ReportFragment : Fragment() {
     }
 
     private fun reportFB(){
-        val location = activity?.findViewById<EditText>(R.id.reportLocation)?.text.toString();
-        val date = activity?.findViewById<EditText>(R.id.reportDate)?.text.toString();
-        val noofpeople = activity?.findViewById<EditText>(R.id.reportNumPeople)?.text.toString();
-        val currentFirebaseUserEmail = FirebaseAuth.getInstance().currentUser?.email;
+        val location = activity?.findViewById<EditText>(R.id.reportLocation)?.text.toString()
+        val date = activity?.findViewById<EditText>(R.id.reportDate)?.text.toString()
+        val noofpeople = activity?.findViewById<EditText>(R.id.reportNumPeople)?.text.toString()
+        val currentFirebaseUserEmail = FirebaseAuth.getInstance().currentUser?.email
 
         if (location.isEmpty() || date.isEmpty() || noofpeople.isEmpty()) {
             Toast.makeText(activity, "One of the above fields is empty !", Toast.LENGTH_SHORT).show()

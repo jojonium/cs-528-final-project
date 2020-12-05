@@ -239,7 +239,7 @@ class LocationUpdatesService : Service() {
                 this, 0,
                 Intent(this, MainActivity::class.java), 0
             )
-            val builder = NotificationCompat.Builder(this)
+            val builder = NotificationCompat.Builder(this, CHANNEL_ID)
                 .addAction(
                     0, getString(R.string.launch_app),
                     activityPendingIntent

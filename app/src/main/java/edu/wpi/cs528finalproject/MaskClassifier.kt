@@ -1,16 +1,14 @@
 package edu.wpi.cs528finalproject
 
-import android.app.Application
 import android.graphics.Bitmap
 import org.pytorch.IValue
 import org.pytorch.Module
 import org.pytorch.Tensor
 import org.pytorch.torchvision.TensorImageUtils
-import java.io.File
 
 
 class MaskClassifier(modelPath: String?) {
-    var model: Module
+    var model: Module = Module.load(modelPath)
     var mean = floatArrayOf(0.485f, 0.456f, 0.406f)
     var std = floatArrayOf(0.229f, 0.224f, 0.225f)
     fun setMeanAndStd(mean: FloatArray, std: FloatArray) {
@@ -18,13 +16,13 @@ class MaskClassifier(modelPath: String?) {
         this.std = std
     }
 
-    fun preprocess(bitmap: Bitmap?, size: Int): Tensor {
-        var bitmap = bitmap
-        bitmap = Bitmap.createScaledBitmap(bitmap!!, size, size, false)
-        return TensorImageUtils.bitmapToFloat32Tensor(bitmap, mean, std)
+    private fun preprocess(bitmap: Bitmap?, size: Int): Tensor {
+        var imageBitmap = bitmap
+        imageBitmap = Bitmap.createScaledBitmap(imageBitmap!!, size, size, false)
+        return TensorImageUtils.bitmapToFloat32Tensor(imageBitmap, mean, std)
     }
 
-    fun argMax(inputs: FloatArray): Int {
+    private fun argMax(inputs: FloatArray): Int {
         var maxIndex = -1
         var maxvalue = 0.0f
         for (i in inputs.indices) {
@@ -41,11 +39,7 @@ class MaskClassifier(modelPath: String?) {
         val inputs = IValue.from(tensor)
         val outputs = model.forward(inputs).toTensor()
         val scores = outputs.dataAsFloatArray
-        val classIndex = argMax(scores)
-        return classIndex
+        return argMax(scores)
     }
 
-    init {
-        model = Module.load(modelPath)
-    }
 }
