@@ -45,14 +45,16 @@
             android:name=".NavigationActivity"
             android:label="@string/title_activity_navigation">
         </activity>
-        <activity android:name=".MainActivity">
+        <activity android:name=".LoginActivity"
+            android:launchMode="singleInstance">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".LoginActivity" />
+        <activity android:name=".SignupActivity"
+            android:launchMode="singleInstance"/>
         <service
             android:name=".location.LocationUpdatesService"
             android:enabled="true"

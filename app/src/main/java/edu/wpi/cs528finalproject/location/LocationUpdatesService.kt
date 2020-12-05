@@ -237,7 +237,7 @@ class LocationUpdatesService : Service() {
             // The PendingIntent to launch activity.
             val activityPendingIntent = PendingIntent.getActivity(
                 this, 0,
-                Intent(this, MainActivity::class.java), 0
+                Intent(this, LoginActivity::class.java), 0
             )
             val builder = NotificationCompat.Builder(this, CHANNEL_ID)
                 .addAction(

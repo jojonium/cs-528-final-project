@@ -17,7 +17,7 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
-import edu.wpi.cs528finalproject.MainActivity
+import edu.wpi.cs528finalproject.LoginActivity
 import edu.wpi.cs528finalproject.R
 import kotlinx.android.synthetic.main.fragment_profile.*
 import kotlin.math.roundToInt
@@ -143,7 +143,7 @@ class ProfileFragment : Fragment() {
     }
 
     private fun SignOutUser() {
-        val intent = Intent(activity, MainActivity::class.java)
+        val intent = Intent(activity, LoginActivity::class.java)
         startActivity(intent)
     }
 
