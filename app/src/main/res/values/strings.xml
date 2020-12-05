@@ -46,6 +46,17 @@
 
     <!-- Profile Page -->
     <string name="signout"> Signout </string>
+    <string name="update"> Update </string>
+    <string name="changePassword"> Change Password </string>
+    <string name="percentileNum"> %d </string>
+    <string name="percentile"> You are in the %dth percentile of users </string>
+    <string name="statsSentence"> Keep it going! You have uploaded a picture of yourself wearing a mask %.2f percent of the time! </string>
+    <string name="noDataSentence"> You have not submitted any mask wearing pictures yet!</string>
+
+    <!-- Upload Page -->
+    <string name="takePicture"> Take a picture! </string>
+    <string name="noMask"> You are not wearing a mask </string>
+    <string name="mask"> You are wearing a mask </string>
 
     <!-- Location Service -->
     <string name="launch_app">Launch app</string>

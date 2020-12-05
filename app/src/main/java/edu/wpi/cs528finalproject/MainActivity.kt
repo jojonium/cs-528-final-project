@@ -41,9 +41,15 @@ class MainActivity : AppCompatActivity() {
         val useremail = findViewById<EditText>(R.id.emailinput).text.toString();
         val userfullname = findViewById<EditText>(R.id.fullnameinput).text.toString();
         val userpassword = findViewById<EditText>(R.id.passwordinput).text.toString();
+        val usercpassword = findViewById<EditText>(R.id.cpasswordinput).text.toString();
 
         if (useremail.isEmpty() || userpassword.isEmpty() || userfullname.isEmpty()) {
             Toast.makeText(this, "One of the above fields is empty !", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        if (!(userpassword.equals(usercpassword))){
+            Toast.makeText(this, "Password and Confirm Password do not match !", Toast.LENGTH_SHORT).show()
             return
         }
 
