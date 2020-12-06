@@ -14,6 +14,13 @@ class LoginActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val auth = FirebaseAuth.getInstance();
+
+        if (auth.currentUser != null ){
+            val intent = Intent(this, NavigationActivity::class.java)
+            startActivity(intent)
+        }
+
         setContentView(R.layout.activity_login)
         val signupbutton1 = findViewById<TextView>(R.id.terms1)
         val signupbutton2 = findViewById<TextView>(R.id.terms2)
@@ -25,7 +32,6 @@ class LoginActivity: AppCompatActivity() {
         signupbutton2.setOnClickListener{
             backToSignup()
         }
-
         loginButton.setOnClickListener{
             loginUser()
         }
