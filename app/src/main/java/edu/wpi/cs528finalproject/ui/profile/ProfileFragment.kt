@@ -10,6 +10,9 @@ import android.view.ViewGroup
 import android.widget.Button
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.github.mikephil.charting.data.BarData
+import com.github.mikephil.charting.data.BarDataSet
+import com.github.mikephil.charting.data.BarEntry
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
@@ -74,6 +77,7 @@ class ProfileFragment : Fragment() {
         ref.addListenerForSingleValueEvent(percentEventListener)
 
         // Calculate the users percentile compared to all other users in firebase
+        var percentileArray = FloatArray(10)
         val percentileEventListener = object : ValueEventListener {
             override fun onCancelled(databaseError: DatabaseError) {
                 // handle error
@@ -89,6 +93,18 @@ class ProfileFragment : Fragment() {
                     var numerator =  (value?.get("correctlyWearingMaskCounter") as Long).toDouble()
                     var denominator = (value?.get("numberOfTimesPromptedToWearMask") as Long).toDouble()
                     percentageList[counter] = numerator/denominator
+                    when(percentageList[counter]*100){
+                        in 0.0..10.0 -> percentileArray[0]++
+                        in 11.0..20.0 -> percentileArray[1]++
+                        in 21.0..30.0 -> percentileArray[2]++
+                        in 31.0..40.0 -> percentileArray[3]++
+                        in 41.0..50.0 -> percentileArray[4]++
+                        in 51.0..60.0 -> percentileArray[5]++
+                        in 61.0..70.0 -> percentileArray[6]++
+                        in 71.0..80.0 -> percentileArray[7]++
+                        in 81.0..90.0 -> percentileArray[8]++
+                        in 91.0..100.0 -> percentileArray[9]++
+                    }
                     counter++
                 }
                 counter = 0
@@ -109,6 +125,8 @@ class ProfileFragment : Fragment() {
                 }
                 percentileText.setText(getString(R.string.percentile).format(percentile))
                 percentileCircle.setText(getString(R.string.percentileNum).format(percentile))
+
+                setUpBarChart(percentileArray)
             }
         }
         val ref2 = database.child("maskWearing")
@@ -122,4 +140,24 @@ class ProfileFragment : Fragment() {
         startActivity(intent)
     }
 
+    private fun setUpBarChart(percentileArray: FloatArray){
+        var barEntries = arrayListOf<BarEntry>()
+        var xAxisLabels = arrayListOf<String>()
+        xAxisLabels.addAll(listOf("0-10%","11-20%","21-30%","31-40%","41-50%","51-60%","61-70%","71-80%","81-90%","91-100%"))
+        var index=0
+        for(p in percentileArray){
+            barEntries.add(BarEntry(p, index))
+            index++
+        }
+        var barDataSetY = BarDataSet(barEntries,"Number of Users")
+        barDataSetY.setColor(resources.getColor(R.color.red))
+        var barData = BarData(xAxisLabels, barDataSetY)
+        barChart.data = barData
+        barChart.invalidate()
+        barChart.setScaleEnabled(false)
+        barChart.setDescription("")
+        barChart.xAxis.setLabelsToSkip(0)
+        barChart.xAxis.setLabelRotationAngle(-30f)
+        barChart.setExtraTopOffset(18f)
+    }
 }
