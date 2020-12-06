@@ -19,13 +19,19 @@ class LoginActivity: AppCompatActivity() {
         val signupbutton2 = findViewById<TextView>(R.id.terms2)
         val loginButton = findViewById<Button>(R.id.button2)
 
+        val auth = FirebaseAuth.getInstance();
+
+        if (auth.currentUser != null ){
+            val intent = Intent(this, NavigationActivity::class.java)
+            startActivity(intent)
+        }
+
         signupbutton1.setOnClickListener{
             backToSignup()
         }
         signupbutton2.setOnClickListener{
             backToSignup()
         }
-
         loginButton.setOnClickListener{
             loginUser()
         }
