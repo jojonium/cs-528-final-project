@@ -32,7 +32,10 @@
     <!-- Report -->
     <string name="Submit"> SUBMIT! </string>
     <string name="LocationHint"> Location </string>
-    <string name="DateHint"> Date </string>
+    <string name="Date"> Date </string>
+    <string name="DateHint"> MM/DD/YYYY </string>
+    <string name="Time"> Time </string>
+    <string name="TimeHint"> hh:mm AM/PM </string>
     <string name="NumPeopleHint">Number of People</string>
     <string name="ReportInstructions">See someone not wearing a mask? Make a report so we can let other users know.</string>
 

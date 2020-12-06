@@ -1,6 +1,10 @@
 package edu.wpi.cs528finalproject.ui.report
 
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import java.time.LocalDateTime
 import android.os.Bundle
+import android.text.Editable
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -14,12 +18,16 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import edu.wpi.cs528finalproject.R
+import java.time.ZoneId
 
 
 class ReportFragment : Fragment() {
 
     private lateinit var reportViewModel: ReportViewModel
     private lateinit var database: DatabaseReference
+
+    private var dateDialog: DatePickerDialog? = null
+    private var timeDialog: TimePickerDialog? = null
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -34,6 +42,50 @@ class ReportFragment : Fragment() {
 //            textView.text = it
 //        })
 
+        val currentDateTime = LocalDateTime.now()
+
+        val dateText = root.findViewById<EditText>(R.id.reportDate)
+        val dateSetListener: DatePickerDialog.OnDateSetListener =
+            DatePickerDialog.OnDateSetListener { _, year, month, dayOfMonth ->
+                dateText.text = Editable.Factory.getInstance().newEditable(
+                    "%02d/%02d/%d".format(month + 1, dayOfMonth, year))
+            }
+
+        dateText.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                if (dateDialog == null) {
+                    dateDialog = DatePickerDialog(requireContext(), dateSetListener,
+                        currentDateTime.year, currentDateTime.monthValue,
+                        currentDateTime.dayOfMonth)
+                    dateDialog!!.show()
+                }
+            } else {
+                dateDialog?.dismiss()
+                dateDialog = null
+            }
+        }
+
+        val timeText = root.findViewById<EditText>(R.id.reportTime)
+        val timeSetListener: TimePickerDialog.OnTimeSetListener =
+            TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
+                timeText.text = Editable.Factory.getInstance().newEditable(
+                    "%d:%02d %s".format(if (hourOfDay <= 12) hourOfDay else hourOfDay - 12,
+                        minute, if (hourOfDay <= 12) "AM" else "PM"))
+            }
+
+        timeText.setOnFocusChangeListener { _, hasFocus ->
+            if (hasFocus) {
+                if (timeDialog == null) {
+                    timeDialog = TimePickerDialog(requireContext(), timeSetListener,
+                        currentDateTime.hour, currentDateTime.minute, false)
+                    timeDialog!!.show()
+                }
+            } else {
+                timeDialog?.dismiss()
+                timeDialog = null
+            }
+        }
+
         val reportButton = root.findViewById<Button>(R.id.button)
         database = Firebase.database.reference
 
@@ -45,12 +97,13 @@ class ReportFragment : Fragment() {
     }
 
     private fun reportFB(){
-        val location = activity?.findViewById<EditText>(R.id.reportLocation)?.text.toString()
-        val date = activity?.findViewById<EditText>(R.id.reportDate)?.text.toString()
-        val noofpeople = activity?.findViewById<EditText>(R.id.reportNumPeople)?.text.toString()
+        val location = requireActivity().findViewById<EditText>(R.id.reportLocation)?.text.toString()
+        val date = requireActivity().findViewById<EditText>(R.id.reportDate)?.text.toString()
+        val time = requireActivity().findViewById<EditText>(R.id.reportTime)?.text.toString()
+        val noofpeople = requireActivity().findViewById<EditText>(R.id.reportNumPeople)?.text.toString()
         val currentFirebaseUserEmail = FirebaseAuth.getInstance().currentUser?.email
 
-        if (location.isEmpty() || date.isEmpty() || noofpeople.isEmpty()) {
+        if (location.isEmpty() || date.isEmpty() || noofpeople.isEmpty() || time.isEmpty()) {
             Toast.makeText(activity, "One of the above fields is empty !", Toast.LENGTH_SHORT).show()
             return
         }
@@ -58,7 +111,7 @@ class ReportFragment : Fragment() {
         database.child("report").child(location).child("useremail").setValue(currentFirebaseUserEmail)
         database.child("report").child(location).child("noofpeople").setValue(noofpeople)
         database.child("report").child(location).child("date").setValue(date)
-
+        database.child("report").child(location).child("time").setValue(time)
     }
 
 
