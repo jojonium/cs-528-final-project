@@ -44,8 +44,9 @@
 
             <ImageButton
                 android:id="@+id/imageButtonTakePicture"
-                android:layout_width="131dp"
-                android:layout_height="63dp"
+                android:layout_width="75dp"
+                android:layout_height="75dp"
+                android:background="@drawable/round_button"
                 app:srcCompat="@drawable/ic_camera" />
         </LinearLayout>
 

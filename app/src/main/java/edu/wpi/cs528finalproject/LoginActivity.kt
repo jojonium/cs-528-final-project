@@ -25,7 +25,7 @@ class LoginActivity: AppCompatActivity() {
         val signupbutton1 = findViewById<TextView>(R.id.terms1)
         val signupbutton2 = findViewById<TextView>(R.id.terms2)
         val loginButton = findViewById<Button>(R.id.button2)
-        
+
         signupbutton1.setOnClickListener{
             backToSignup()
         }
