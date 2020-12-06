@@ -2,7 +2,6 @@ package edu.wpi.cs528finalproject
 
 import android.content.Intent
 import android.os.Bundle
-import android.os.PersistableBundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -15,10 +14,17 @@ class LoginActivity: AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        val auth = FirebaseAuth.getInstance();
+
+        if (auth.currentUser != null ){
+            val intent = Intent(this, NavigationActivity::class.java)
+            startActivity(intent)
+        }
+
         setContentView(R.layout.activity_login)
-        val signupbutton1 = findViewById<TextView>(R.id.terms1);
-        val signupbutton2 = findViewById<TextView>(R.id.terms2);
-        val loginButton = findViewById<Button>(R.id.button2);
+        val signupbutton1 = findViewById<TextView>(R.id.terms1)
+        val signupbutton2 = findViewById<TextView>(R.id.terms2)
+        val loginButton = findViewById<Button>(R.id.button2)
 
         signupbutton1.setOnClickListener{
             backToSignup()
@@ -26,20 +32,19 @@ class LoginActivity: AppCompatActivity() {
         signupbutton2.setOnClickListener{
             backToSignup()
         }
-
         loginButton.setOnClickListener{
             loginUser()
         }
     }
 
     private fun backToSignup(){
-        val intent = Intent(this, MainActivity::class.java)
+        val intent = Intent(this, SignupActivity::class.java)
         startActivity(intent)
     }
 
     private fun loginUser(){
-        val useremail = findViewById<EditText>(R.id.fullnameinput).text.toString();
-        val userpassword = findViewById<EditText>(R.id.passwordinput).text.toString();
+        val useremail = findViewById<EditText>(R.id.fullnameinput).text.toString()
+        val userpassword = findViewById<EditText>(R.id.passwordinput).text.toString()
 
         if (useremail.isEmpty() || userpassword.isEmpty()) {
             Toast.makeText(this, "Email or Password is Empty !", Toast.LENGTH_SHORT).show()

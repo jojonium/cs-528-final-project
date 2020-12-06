@@ -1,6 +1,12 @@
 <resources>
-    <!-- Login and Signup -->
     <string name="app_name">cs528finalproject</string>
+
+    <!-- Permissions -->
+    <string name="location_permission_required">Access to your location is required for location-based features.</string>
+    <string name="location_permission_rationale">We use your location to give you the most accurate COVID-19
+    case data for your area, and give you risk assessments for any place you might visit.</string>
+
+    <!-- Login and Signup -->
     <string name="x_text"> X </string>
     <string name="signup_text"> SignUp </string>
     <string name="signup_button"> Sign Up </string>
@@ -33,11 +39,10 @@
     <!-- Home/Check-in page -->
     <string name="checkin"> Check In </string>
     <string name="covidSafety">COVID Safety</string>
-    <string name="safetyTextZone">Red Zone</string>
-    <string name="safetyTextNumCases">There were %d positive cases of COVID-19 reported in the last week</string>
-    <string name="safetyTextNumReports">There are %d reports of any maskless people at this location</string>
+    <string name="safetyTextLoading">Fetching COVID-19 data for your location…</string>
+    <string name="safetyTextNumCases">There were %d positive cases of COVID-19 reported in the last two weeks.</string>
+    <string name="safetyTextThreatLevel">Threat Level: %s</string>
     <string name="title_activity_navigation">NavigationActivity</string>
-
 
     <!-- Profile Page -->
     <string name="signout"> Signout </string>
@@ -54,5 +59,9 @@
     <string name="noMask"> You are not wearing a mask </string>
     <string name="mask"> You are wearing a mask </string>
 
+    <!-- Location Service -->
+    <string name="launch_app">Launch app</string>
+    <string name="remove_location_updates">Remove location updates</string>
+    <string name="location_updated">Location Updated: %1$s</string>
 
 </resources>

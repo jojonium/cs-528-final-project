@@ -1,21 +1,19 @@
 package edu.wpi.cs528finalproject
 
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 
-class MainActivity : AppCompatActivity() {
+class SignupActivity : AppCompatActivity() {
     private lateinit var database: DatabaseReference
 
 
@@ -24,8 +22,8 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_signup)
         database = Firebase.database.reference
 
-        val signupbutton = findViewById<Button>(R.id.button2);
-        val loginbutton = findViewById<TextView>(R.id.LOGIN);
+        val signupbutton = findViewById<Button>(R.id.button2)
+        val loginbutton = findViewById<TextView>(R.id.LOGIN)
 
         loginbutton.setOnClickListener{
             val intent = Intent(this, LoginActivity::class.java)
@@ -38,10 +36,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun RegisterUser() {
-        val useremail = findViewById<EditText>(R.id.emailinput).text.toString();
-        val userfullname = findViewById<EditText>(R.id.fullnameinput).text.toString();
-        val userpassword = findViewById<EditText>(R.id.passwordinput).text.toString();
-        val usercpassword = findViewById<EditText>(R.id.cpasswordinput).text.toString();
+        val useremail = findViewById<EditText>(R.id.emailinput).text.toString()
+        val userfullname = findViewById<EditText>(R.id.fullnameinput).text.toString()
+        val userpassword = findViewById<EditText>(R.id.passwordinput).text.toString()
+        val usercpassword = findViewById<EditText>(R.id.cpasswordinput).text.toString()
 
         if (useremail.isEmpty() || userpassword.isEmpty() || userfullname.isEmpty()) {
             Toast.makeText(this, "One of the above fields is empty !", Toast.LENGTH_SHORT).show()

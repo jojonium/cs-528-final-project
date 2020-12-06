@@ -60,15 +60,19 @@ class UploadFragment : Fragment() {
 
         // Get the current Value
         val currentFirebaseUser = FirebaseAuth.getInstance().currentUser?.email?.split('@')?.get(0)
-                ?: "No User";
+                ?: "No User"
 
         val valueEventListener = object : ValueEventListener {
             override fun onCancelled(databaseError: DatabaseError) {
                 // handle error
             }
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                correctlyWearingMaskCounter = (dataSnapshot.child("correctlyWearingMaskCounter")?.getValue() ?: 0L) as Long
-                numberOfTimesPromptedToWearMask = (dataSnapshot.child("numberOfTimesPromptedToWearMask")?.getValue() ?: 0L) as Long
+                correctlyWearingMaskCounter = (dataSnapshot.child("correctlyWearingMaskCounter")
+                    .value
+                    ?: 0L) as Long
+                numberOfTimesPromptedToWearMask = (dataSnapshot.child("numberOfTimesPromptedToWearMask")
+                    .value
+                    ?: 0L) as Long
             }
         }
         val ref = database.child("maskWearing").child(currentFirebaseUser)
@@ -80,7 +84,7 @@ class UploadFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         if(imageButtonTakePicture!=null){
-            imageButtonTakePicture.setOnClickListener(){
+            imageButtonTakePicture.setOnClickListener {
                 val takePictureIntent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
                 if(activity?.let { it1 -> takePictureIntent.resolveActivity(it1.packageManager) } !=null){
                     startActivityForResult(takePictureIntent, REQUEST_CODE)
@@ -95,29 +99,29 @@ class UploadFragment : Fragment() {
         if(requestCode == REQUEST_CODE && resultCode == Activity.RESULT_OK){
             val takenImage = data?.extras?.get("data") as Bitmap
             imagePreviewView.setImageBitmap(takenImage)
-            imagePreviewView.setVisibility(View.VISIBLE)
+            imagePreviewView.visibility = View.VISIBLE
 
             val mask = classifier.predict(takenImage)
             Log.d(null, "Mask prediction")
             Log.d(null, mask.toString())
 
             val currentFirebaseUser = FirebaseAuth.getInstance().currentUser?.email?.split('@')?.get(0)
-                    ?: "No User";
+                    ?: "No User"
 
             if(mask==0){
-                textView2.setText(getString(R.string.noMask))
+                textView2.text = getString(R.string.noMask)
                 database.child("maskWearing").child(currentFirebaseUser).child("correctlyWearingMaskCounter").setValue(correctlyWearingMaskCounter)
                 numberOfTimesPromptedToWearMask += 1
                 database.child("maskWearing").child(currentFirebaseUser).child("numberOfTimesPromptedToWearMask").setValue(numberOfTimesPromptedToWearMask)
 
             }else{
-                textView2.setText(getString(R.string.mask))
+                textView2.text = getString(R.string.mask)
                 correctlyWearingMaskCounter += 1
                 database.child("maskWearing").child(currentFirebaseUser).child("correctlyWearingMaskCounter").setValue(correctlyWearingMaskCounter)
                 numberOfTimesPromptedToWearMask += 1
                 database.child("maskWearing").child(currentFirebaseUser).child("numberOfTimesPromptedToWearMask").setValue(numberOfTimesPromptedToWearMask)
             }
-            textView2.setVisibility(View.VISIBLE)
+            textView2.visibility = View.VISIBLE
         }
         super.onActivityResult(requestCode, resultCode, data)
     }

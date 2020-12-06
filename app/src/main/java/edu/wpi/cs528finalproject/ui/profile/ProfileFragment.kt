@@ -3,11 +3,11 @@ package edu.wpi.cs528finalproject.ui.profile
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import com.github.mikephil.charting.data.BarData
@@ -20,7 +20,7 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
-import edu.wpi.cs528finalproject.MainActivity
+import edu.wpi.cs528finalproject.LoginActivity
 import edu.wpi.cs528finalproject.R
 import kotlinx.android.synthetic.main.fragment_profile.*
 import kotlin.math.roundToInt
@@ -49,27 +49,32 @@ class ProfileFragment : Fragment() {
         val signoutButton = root.findViewById<Button>(R.id.button)
         database = Firebase.database.reference
 
-        signoutButton.setOnClickListener{
-            SignOutUser();
+        signoutButton.setOnClickListener {
+            SignOutUser()
         }
 
         // Calculate the percentage of times the user wears his or her mask based on the data in firebase
         val currentFirebaseUser = FirebaseAuth.getInstance().currentUser?.email?.split('@')?.get(0)
-                ?: "No User";
+            ?: "No User"
         var percentage = 0.0
         val percentEventListener = object : ValueEventListener {
             override fun onCancelled(databaseError: DatabaseError) {
                 // handle error
             }
+
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                correctlyWearingMaskCounter = (dataSnapshot.child("correctlyWearingMaskCounter")?.getValue() ?: 0L) as Long
-                numberOfTimesPromptedToWearMask = (dataSnapshot.child("numberOfTimesPromptedToWearMask")?.getValue() ?: 0L) as Long
+                correctlyWearingMaskCounter =
+                    (dataSnapshot.child("correctlyWearingMaskCounter").value ?: 0L) as Long
+                numberOfTimesPromptedToWearMask =
+                    (dataSnapshot.child("numberOfTimesPromptedToWearMask").value
+                        ?: 0L) as Long
                 //update the view with the percent of data
-                if(numberOfTimesPromptedToWearMask != 0L) {
-                    percentage = (correctlyWearingMaskCounter.toDouble() / numberOfTimesPromptedToWearMask.toDouble())
-                    statsText.setText(getString(R.string.statsSentence).format(percentage * 100))
-                }else{
-                    statsText.setText(getString(R.string.noDataSentence))
+                if (numberOfTimesPromptedToWearMask != 0L) {
+                    percentage =
+                        (correctlyWearingMaskCounter.toDouble() / numberOfTimesPromptedToWearMask.toDouble())
+                    statsText.text = getString(R.string.statsSentence).format(percentage * 100)
+                } else {
+                    statsText.text = getString(R.string.noDataSentence)
                 }
             }
         }
@@ -82,17 +87,21 @@ class ProfileFragment : Fragment() {
             override fun onCancelled(databaseError: DatabaseError) {
                 // handle error
             }
+
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                var data = dataSnapshot.getValue() as HashMap<*, HashMap<*, *>>
+                val data = dataSnapshot.value
+                if (data !is HashMap<*, *>) return
                 // determine the percentile of the user
                 // loop through all user percentages and determine how many this user is larger than
                 // round up to make it a nicer number to display
-                var percentageList = DoubleArray(data.size)
+                val percentageList = DoubleArray(data.size)
                 var counter = 0
-                for((key,value) in data){
-                    var numerator =  (value?.get("correctlyWearingMaskCounter") as Long).toDouble()
-                    var denominator = (value?.get("numberOfTimesPromptedToWearMask") as Long).toDouble()
-                    percentageList[counter] = numerator/denominator
+                for((_,value) in data){
+                    if (value !is HashMap<*, *>) return
+                    val numerator = (value["correctlyWearingMaskCounter"] as Long).toDouble()
+                    val denominator =
+                        (value["numberOfTimesPromptedToWearMask"] as Long).toDouble()
+                    percentageList[counter] = numerator / denominator
                     when(percentageList[counter]*100){
                         in 0.0..10.0 -> percentileArray[0]++
                         in 11.0..20.0 -> percentileArray[1]++
@@ -109,22 +118,38 @@ class ProfileFragment : Fragment() {
                 }
                 counter = 0
                 percentageList.sort()
-                for(p in percentageList){
-                    if(percentage < p){
+                for (p in percentageList) {
+                    if (percentage < p) {
                         break
                     }
                     counter++
                 }
-                var percentile = ((counter.toDouble() / data.size.toDouble())*100).roundToInt()
-                if(percentile>=75){
-                    percentileCircle.setBackgroundTintList(ColorStateList.valueOf(resources.getColor(R.color.green)))
-                }else if(percentile>40){
-                    percentileCircle.setBackgroundTintList(ColorStateList.valueOf(resources.getColor(R.color.yellow)))
-                }else{
-                    percentileCircle.setBackgroundTintList(ColorStateList.valueOf(resources.getColor(R.color.red)))
+                val percentile = ((counter.toDouble() / data.size.toDouble()) * 100).roundToInt()
+                when {
+                    percentile >= 75 -> {
+                        percentileCircle.backgroundTintList = ColorStateList.valueOf(
+                            ContextCompat.getColor(requireContext(),
+                                R.color.green
+                            )
+                        )
+                    }
+                    percentile > 40 -> {
+                        percentileCircle.backgroundTintList = ColorStateList.valueOf(
+                            ContextCompat.getColor(requireContext(),
+                                R.color.yellow
+                            )
+                        )
+                    }
+                    else -> {
+                        percentileCircle.backgroundTintList = ColorStateList.valueOf(
+                            ContextCompat.getColor(requireContext(),
+                                R.color.red
+                            )
+                        )
+                    }
                 }
-                percentileText.setText(getString(R.string.percentile).format(percentile))
-                percentileCircle.setText(getString(R.string.percentileNum).format(percentile))
+                percentileText.text = getString(R.string.percentile).format(percentile)
+                percentileCircle.text = getString(R.string.percentileNum).format(percentile)
 
                 setUpBarChart(percentileArray)
             }
@@ -135,8 +160,9 @@ class ProfileFragment : Fragment() {
         return root
     }
 
-    private fun SignOutUser(){
-        val intent = Intent(activity, MainActivity::class.java)
+    private fun SignOutUser() {
+        val intent = Intent(activity, LoginActivity::class.java)
+        FirebaseAuth.getInstance().signOut();
         startActivity(intent)
     }
 
