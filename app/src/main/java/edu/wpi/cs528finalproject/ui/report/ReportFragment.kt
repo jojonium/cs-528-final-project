@@ -66,13 +66,14 @@ class ReportFragment : Fragment() {
             }
         })
 
-        val locationAutocompleteFragment =
+        var locationAutocompleteFragment =
             childFragmentManager.findFragmentById(R.id.reportLocation)
                     as AutocompleteSupportFragment
 
-        locationAutocompleteFragment.setHint(getString(R.string.LocationHint))
-        locationAutocompleteFragment.setPlaceFields(listOf(Place.Field.LAT_LNG))
-        locationAutocompleteFragment.setTypeFilter(TypeFilter.ESTABLISHMENT)
+        locationAutocompleteFragment = locationAutocompleteFragment.setHint(getString(R.string.LocationHint))
+        locationAutocompleteFragment = locationAutocompleteFragment.setPlaceFields(listOf(Place.Field.LAT_LNG, Place.Field.ADDRESS,
+        Place.Field.NAME))
+        locationAutocompleteFragment = locationAutocompleteFragment.setTypeFilter(TypeFilter.ESTABLISHMENT)
 
         val tempLoc = currentLocation
         if (tempLoc != null) {
@@ -83,12 +84,14 @@ class ReportFragment : Fragment() {
             include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 180.0)).
             include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 270.0)).
             build()
-            locationAutocompleteFragment.setLocationBias(RectangularBounds.newInstance(bounds))
+            locationAutocompleteFragment = locationAutocompleteFragment.setLocationBias(
+                RectangularBounds.newInstance(bounds))
         }
 
-        locationAutocompleteFragment.setOnPlaceSelectedListener(object : PlaceSelectionListener {
+        locationAutocompleteFragment = locationAutocompleteFragment.setOnPlaceSelectedListener(object : PlaceSelectionListener {
             override fun onPlaceSelected(place: Place) {
                 selectedPlace = place
+                locationAutocompleteFragment = locationAutocompleteFragment.setText(place.address)
                 Log.i(TAG, "Place: ${place.latLng}")
             }
 
@@ -147,13 +150,20 @@ class ReportFragment : Fragment() {
         database = Firebase.database.reference
 
         reportButton.setOnClickListener{
-            reportFB()
+            if (reportFB()) {
+                // Report successful; clean up
+                selectedPlace = null
+                locationAutocompleteFragment = locationAutocompleteFragment.setText("")
+                dateText.setText("")
+                timeText.setText("")
+                root.findViewById<EditText>(R.id.reportNumPeople).setText("")
+            }
         }
 
         return root
     }
 
-    private fun reportFB(){
+    private fun reportFB(): Boolean {
         val date = requireActivity().findViewById<EditText>(R.id.reportDate)?.text.toString()
         val time = requireActivity().findViewById<EditText>(R.id.reportTime)?.text.toString()
         val noofpeople = requireActivity().findViewById<EditText>(R.id.reportNumPeople)?.text.toString()
@@ -161,7 +171,7 @@ class ReportFragment : Fragment() {
 
         if (selectedPlace == null || date.isEmpty() || noofpeople.isEmpty() || time.isEmpty()) {
             Toast.makeText(activity, "One of the above fields is empty !", Toast.LENGTH_SHORT).show()
-            return
+            return false
         }
 
         val placeLatLngString = selectedPlace!!.latLng.toString()
@@ -170,6 +180,7 @@ class ReportFragment : Fragment() {
         database.child("report").child(placeLatLngString).child("noofpeople").setValue(noofpeople)
         database.child("report").child(placeLatLngString).child("date").setValue(date)
         database.child("report").child(placeLatLngString).child("time").setValue(time)
+        return true
     }
 
 
