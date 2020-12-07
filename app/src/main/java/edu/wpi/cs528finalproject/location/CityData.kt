@@ -23,7 +23,7 @@ class CityData(
     val percentPositivity: Double = 0.0,
     @Json(name="Change Since Last Week")
     val changeSinceLastWeek: String = "Unknown",
-    @Json(name="Covid_Level")
+    @Json(name="Covid Level")
     val covidLevel: String = "Unknown"
 )
 
