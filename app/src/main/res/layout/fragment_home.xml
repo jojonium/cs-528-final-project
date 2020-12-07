@@ -27,13 +27,22 @@
             android:background="@color/red"
             android:backgroundTint="@color/red" />
 
+        <androidx.fragment.app.FragmentContainerView
+            android:id="@+id/search_bar_home"
+            android:name="com.google.android.libraries.places.widget.AutocompleteSupportFragment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="5dp"
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/bottomborder"/>
+
         <com.google.android.gms.maps.MapView
             android:id="@+id/mapView"
             android:layout_width="match_parent"
             android:layout_height="350sp"
-            android:layout_marginStart="20sp"
-            android:layout_marginTop="20sp"
-            android:layout_marginEnd="20sp" />
+            android:layout_marginStart="20dp"
+            android:layout_marginEnd="20dp" />
 
         <TextView
             android:id="@+id/SafetyTitle"
@@ -57,9 +66,9 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginStart="20sp"
-            android:layout_marginTop="5sp"
-            android:layout_marginEnd="20sp"
+            android:layout_marginStart="20dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginEnd="20dp"
             android:orientation="horizontal">
 
             <LinearLayout

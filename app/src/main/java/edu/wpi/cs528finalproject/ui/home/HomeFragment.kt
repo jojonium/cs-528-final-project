@@ -1,6 +1,7 @@
 package edu.wpi.cs528finalproject.ui.home
 
 import android.Manifest
+import android.content.ContentValues
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.location.Location
@@ -21,14 +22,18 @@ import com.github.kittinunf.fuel.core.FuelError
 import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.core.extensions.jsonBody
 import com.github.kittinunf.result.Result
+import com.google.android.gms.common.api.Status
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
 import com.google.android.gms.maps.MapView
 import com.google.android.gms.maps.OnMapReadyCallback
-import com.google.android.gms.maps.model.LatLng
-import com.google.android.gms.maps.model.Marker
-import com.google.android.gms.maps.model.MarkerOptions
-import com.google.android.gms.maps.model.PointOfInterest
+import com.google.android.gms.maps.model.*
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.model.RectangularBounds
+import com.google.android.libraries.places.api.model.TypeFilter
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
+import com.google.maps.android.SphericalUtil
 import edu.wpi.cs528finalproject.*
 import edu.wpi.cs528finalproject.location.CityData
 import edu.wpi.cs528finalproject.location.CityDataWrapper
@@ -44,6 +49,7 @@ class HomeFragment :
     private var mMap: GoogleMap? = null
     private var mapView: MapView? = null
     private val defaultZoom: Float = 16.0F
+    private val biasRadius = 1000.0
     private lateinit var alertTextNumCasesView: TextView
     private lateinit var alertTextZoneView: TextView
     private lateinit var alertCircle: View
@@ -66,6 +72,42 @@ class HomeFragment :
         alertTextNumCasesView = root.findViewById(R.id.alertTextNumCases)
         alertTextZoneView = root.findViewById(R.id.alertTextZone)
         alertCircle = root.findViewById(R.id.alertCircle)
+
+        var locationAutocompleteFragment =
+            childFragmentManager.findFragmentById(R.id.search_bar_home)
+                    as AutocompleteSupportFragment
+
+        locationAutocompleteFragment = locationAutocompleteFragment.setHint(getString(R.string.LocationHint))
+        locationAutocompleteFragment = locationAutocompleteFragment.setPlaceFields(listOf(
+            Place.Field.LAT_LNG, Place.Field.ADDRESS,
+            Place.Field.NAME))
+        locationAutocompleteFragment = locationAutocompleteFragment.setTypeFilter(TypeFilter.ESTABLISHMENT)
+
+        val tempLoc = currentLocation
+        if (tempLoc != null) {
+            val currentLocationLatLng = LatLng(tempLoc.latitude, tempLoc.longitude)
+            val bounds = LatLngBounds.Builder().
+            include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 0.0)).
+            include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 90.0)).
+            include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 180.0)).
+            include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 270.0)).
+            build()
+            locationAutocompleteFragment = locationAutocompleteFragment.setLocationBias(
+                RectangularBounds.newInstance(bounds))
+        }
+
+        locationAutocompleteFragment = locationAutocompleteFragment.setOnPlaceSelectedListener(object :
+            PlaceSelectionListener {
+            override fun onPlaceSelected(place: Place) {
+                place.latLng?.let { showPlace(it) }
+                locationAutocompleteFragment = locationAutocompleteFragment.setText(place.address)
+                Log.i(ContentValues.TAG, "Place: ${place.latLng}")
+            }
+
+            override fun onError(status: Status) {
+                Log.i(ContentValues.TAG, "An error occurred: $status")
+            }
+        })
 
         mapView = root.findViewById(R.id.mapView)
         mapView?.onCreate(savedInstanceState)
@@ -192,13 +234,21 @@ class HomeFragment :
 
     override fun onPoiClick(poi: PointOfInterest) {
         selectedPoi = poi
-        marker = mMap!!.addMarker(
-                // TODO: Add COVID data to marker info window
-                MarkerOptions()
-                        .position(poi.latLng)
+        showPlace(poi.latLng)
+    }
+
+    private fun showPlace(latLng: LatLng) {
+        if (marker != null && marker?.position?.equals(latLng) == true) {
+            marker?.remove()
+            marker = null
+        }
+        marker = mMap?.addMarker(
+            // TODO: Add COVID data to marker info window
+            MarkerOptions()
+                .position(latLng)
         )
         mMap?.moveCamera(
-                CameraUpdateFactory.newLatLngZoom(poi.latLng, defaultZoom)
+            CameraUpdateFactory.newLatLngZoom(latLng, defaultZoom)
         )
     }
 
