@@ -191,7 +191,7 @@ class ReportFragment : Fragment() {
         val currentTz = ZoneId.systemDefault()
         val currentZoneDateTime = ZonedDateTime.parse("$date $time",
         DateTimeFormatter.ofPattern("MM/dd/yyyy h:mm a").withZone(currentTz))
-        val timestamp = currentZoneDateTime.toInstant().epochSecond
+        val timestamp = currentZoneDateTime.toInstant().toEpochMilli()
 
         val encodedLatLng = FirebaseEncoder.encodeForFirebaseKey(placeLatLngString)
 
