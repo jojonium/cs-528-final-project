@@ -26,9 +26,3 @@ class CityData(
     @Json(name="Covid Level")
     val covidLevel: String = "Unknown"
 )
-
-class CityDataWrapper(
-    val body: String,
-    val statusCode: Int
-)
-
