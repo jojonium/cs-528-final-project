@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">cs528finalproject</string>
+    <string name="app_name">COVID Traveler</string>
 
     <!-- Permissions -->
     <string name="location_permission_required">Access to your location is required for location-based features.</string>
