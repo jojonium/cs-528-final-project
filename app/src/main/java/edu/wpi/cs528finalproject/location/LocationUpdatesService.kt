@@ -7,6 +7,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.location.Geocoder
 import android.location.Location
 import android.os.*
 import android.util.Log
@@ -14,9 +15,16 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import com.beust.klaxon.Klaxon
+import com.github.kittinunf.fuel.Fuel
+import com.github.kittinunf.fuel.core.FuelError
+import com.github.kittinunf.fuel.core.Response
+import com.github.kittinunf.fuel.core.extensions.jsonBody
+import com.github.kittinunf.result.Result
 import com.google.android.gms.location.*
 import edu.wpi.cs528finalproject.*
 import edu.wpi.cs528finalproject.R
+import java.util.*
 
 
 /**
@@ -64,6 +72,8 @@ class LocationUpdatesService : Service() {
      * The current location.
      */
     private var mLocation: Location? = null
+
+    private var lastCity: String = ""
 
     private var curActivity: AppCompatActivity? = null
 
@@ -217,6 +227,33 @@ class LocationUpdatesService : Service() {
         }
     }
 
+    private fun getNewCityNotification(city: String, level: String): Notification {
+        val intent = Intent(this, LocationUpdatesService::class.java)
+        val text = getString(R.string.new_city_level_notification, city, level)
+        // The PendingIntent to launch activity.
+        val activityPendingIntent = PendingIntent.getActivity(
+            this, 0,
+            Intent(this, LoginActivity::class.java), 0
+        )
+        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            .addAction(
+                0, getString(R.string.launch_app),
+                activityPendingIntent
+            )
+            .setContentText(text)
+            .setContentTitle(getString(R.string.new_city_level_title))
+            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setTicker(text)
+            .setWhen(System.currentTimeMillis())
+        // Set the Channel ID for Android O.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            builder.setChannelId(CHANNEL_ID) // Channel ID
+        }
+        return builder.build()
+    }
+
+
     /**
      * Returns the [NotificationCompat] used as part of the foreground service.
      */
@@ -307,6 +344,17 @@ class LocationUpdatesService : Service() {
         intent.putExtra(EXTRA_LOCATION, location)
         LocalBroadcastManager.getInstance(applicationContext).sendBroadcast(intent)
 
+        val geocoder = Geocoder(this, Locale.getDefault())
+        val city = geocoder.getFromLocation(location.latitude, location.longitude, 1)[0].locality
+        if (city != lastCity) {
+            lastCity = city
+            Fuel.post("https://hat1omnl1j.execute-api.us-east-2.amazonaws.com")
+                .jsonBody("{ \"town\": \"$city\" }")
+                .response { _, response, result ->
+                    handleCityDataResponse(response, result)
+                }
+        }
+
         // Update notification content if running as a foreground service.
         if (serviceIsRunningInForeground(this)) {
             mNotificationManager!!.notify(
@@ -314,6 +362,36 @@ class LocationUpdatesService : Service() {
                 notification
             )
         }
+    }
+
+    private fun handleCityDataResponse(response: Response, result: Result<ByteArray, FuelError>) {
+        val (bytes, error) = result
+        if (bytes == null || error != null) {
+            Log.e("CityAPI", error.toString())
+            return;
+        }
+        if (response.statusCode == 404 || bytes.isEmpty()) {
+            Log.e("CityAPI", "Got a 404 or empty response")
+            return;
+        }
+        val json = String(response.data)
+        Log.d("CityAPI", json)
+        val cityData: CityData?
+        try {
+            val cityDataWrapper = Klaxon()
+                .parse<CityDataWrapper>(json) ?: throw Error("cityDataWrapper is null")
+            cityData = Klaxon()
+                .parseArray<CityData>(cityDataWrapper.body)?.get(0)
+                ?: throw Error("cityData is null")
+
+        } catch (error: Error) {
+            Log.e("CityAPI", error.toString())
+            return;
+        }
+        mNotificationManager!!.notify(
+            NOTIFICATION_ID,
+            getNewCityNotification(cityData.cityTown, cityData.covidLevel)
+        )
     }
 
     /**
