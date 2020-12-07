@@ -50,7 +50,7 @@ class LocationUpdatesService : Service() {
      * place.
      */
     private var mChangingConfiguration = false
-    private var mNotificationManager: NotificationManager? = null
+    private lateinit var mNotificationManager: NotificationManager
 
     /**
      * Contains parameters used by [com.google.android.gms.location.FusedLocationProviderApi].
@@ -60,13 +60,13 @@ class LocationUpdatesService : Service() {
     /**
      * Provides access to the Fused Location Provider API.
      */
-    private var mFusedLocationClient: FusedLocationProviderClient? = null
+    private lateinit var mFusedLocationClient: FusedLocationProviderClient
 
     /**
      * Callback for changes in location.
      */
     private var mLocationCallback: LocationCallback? = null
-    private var mServiceHandler: Handler? = null
+    private lateinit var mServiceHandler: Handler
 
     /**
      * The current location.
@@ -104,7 +104,7 @@ class LocationUpdatesService : Service() {
                 NotificationChannel(CHANNEL_ID, name, NotificationManager.IMPORTANCE_LOW)
 
             // Set the Notification Channel for the Notification Manager.
-            mNotificationManager!!.createNotificationChannel(mChannel)
+            mNotificationManager.createNotificationChannel(mChannel)
         }
     }
 
@@ -163,7 +163,7 @@ class LocationUpdatesService : Service() {
     }
 
     override fun onDestroy() {
-        mServiceHandler!!.removeCallbacksAndMessages(null)
+        mServiceHandler.removeCallbacksAndMessages(null)
     }
 
     /**
@@ -191,7 +191,7 @@ class LocationUpdatesService : Service() {
             }
             Utils.setRequestingLocationUpdates(this, false)
         } else {
-            mFusedLocationClient?.requestLocationUpdates(
+            mFusedLocationClient.requestLocationUpdates(
                 mLocationRequest,
                 mLocationCallback, Looper.myLooper()
             )
@@ -221,14 +221,13 @@ class LocationUpdatesService : Service() {
             }
             Utils.setRequestingLocationUpdates(this, true)
         } else {
-            mFusedLocationClient!!.removeLocationUpdates(mLocationCallback)
+            mFusedLocationClient.removeLocationUpdates(mLocationCallback)
             Utils.setRequestingLocationUpdates(this, false)
             stopSelf()
         }
     }
 
     private fun getNewCityNotification(city: String, level: String): Notification {
-        val intent = Intent(this, LocationUpdatesService::class.java)
         val text = getString(R.string.new_city_level_notification, city, level)
         // The PendingIntent to launch activity.
         val activityPendingIntent = PendingIntent.getActivity(
@@ -320,7 +319,7 @@ class LocationUpdatesService : Service() {
                         )
                     }
                 } else {
-                    mFusedLocationClient!!.lastLocation
+                    mFusedLocationClient.lastLocation
                         .addOnCompleteListener { task ->
                             if (task.isSuccessful && task.result != null) {
                                 mLocation = task.result
@@ -357,7 +356,7 @@ class LocationUpdatesService : Service() {
 
         // Update notification content if running as a foreground service.
         if (serviceIsRunningInForeground(this)) {
-            mNotificationManager!!.notify(
+            mNotificationManager.notify(
                 NOTIFICATION_ID,
                 notification
             )
@@ -368,11 +367,11 @@ class LocationUpdatesService : Service() {
         val (bytes, error) = result
         if (bytes == null || error != null) {
             Log.e("CityAPI", error.toString())
-            return;
+            return
         }
         if (response.statusCode == 404 || bytes.isEmpty()) {
             Log.e("CityAPI", "Got a 404 or empty response")
-            return;
+            return
         }
         val json = String(response.data)
         Log.d("CityAPI", json)
@@ -386,9 +385,9 @@ class LocationUpdatesService : Service() {
 
         } catch (error: Error) {
             Log.e("CityAPI", error.toString())
-            return;
+            return
         }
-        mNotificationManager!!.notify(
+        mNotificationManager.notify(
             NOTIFICATION_ID,
             getNewCityNotification(cityData.cityTown, cityData.covidLevel)
         )
