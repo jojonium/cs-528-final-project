@@ -66,5 +66,7 @@
     <string name="launch_app">Launch app</string>
     <string name="remove_location_updates">Remove location updates</string>
     <string name="location_updated">Location Updated: %1$s</string>
+    <string name="new_city_level_title">New locality information available</string>
+    <string name="new_city_level_notification">%s has a %s level COVID threat</string>
 
 </resources>
