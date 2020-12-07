@@ -62,4 +62,6 @@ dependencies {
     implementation 'org.pytorch:pytorch_android:1.6.0'
     implementation 'org.pytorch:pytorch_android_torchvision:1.6.0'
     coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:1.1.1'
+    implementation 'com.google.android.libraries.places:places:2.4.0'
+    implementation 'com.google.maps.android:android-maps-utils:2.2.0'
 }

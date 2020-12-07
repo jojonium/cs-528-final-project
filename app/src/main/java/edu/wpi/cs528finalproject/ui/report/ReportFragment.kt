@@ -2,9 +2,12 @@ package edu.wpi.cs528finalproject.ui.report
 
 import android.app.DatePickerDialog
 import android.app.TimePickerDialog
+import android.content.ContentValues.TAG
+import android.location.Location
 import java.time.LocalDateTime
 import android.os.Bundle
 import android.text.Editable
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -13,12 +16,22 @@ import android.widget.EditText
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
+import com.google.android.gms.common.api.Status
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.model.RectangularBounds
+import com.google.android.libraries.places.api.model.TypeFilter
+import com.google.android.libraries.places.widget.AutocompleteSupportFragment
+import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
+import com.google.maps.android.SphericalUtil
+import edu.wpi.cs528finalproject.LocationChangedListener
+import edu.wpi.cs528finalproject.NavigationActivity
 import edu.wpi.cs528finalproject.R
-import java.time.ZoneId
 
 
 class ReportFragment : Fragment() {
@@ -26,8 +39,12 @@ class ReportFragment : Fragment() {
     private lateinit var reportViewModel: ReportViewModel
     private lateinit var database: DatabaseReference
 
+    private var selectedPlace: Place? = null
     private var dateDialog: DatePickerDialog? = null
     private var timeDialog: TimePickerDialog? = null
+
+    private var currentLocation: Location? = null
+    private val biasRadius = 5000.0
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -41,6 +58,46 @@ class ReportFragment : Fragment() {
 //        notificationsViewModel.text.observe(viewLifecycleOwner, Observer {
 //            textView.text = it
 //        })
+
+        (requireActivity() as NavigationActivity).addOnLocationChangedListener(object :
+            LocationChangedListener {
+            override fun onLocationChanged(location: Location?) {
+                currentLocation = location
+            }
+        })
+
+        val locationAutocompleteFragment =
+            childFragmentManager.findFragmentById(R.id.reportLocation)
+                    as AutocompleteSupportFragment
+
+        locationAutocompleteFragment.setHint(getString(R.string.LocationHint))
+        locationAutocompleteFragment.setPlaceFields(listOf(Place.Field.LAT_LNG))
+        locationAutocompleteFragment.setTypeFilter(TypeFilter.ESTABLISHMENT)
+
+        val tempLoc = currentLocation
+        if (tempLoc != null) {
+            val currentLocationLatLng = LatLng(tempLoc.latitude, tempLoc.longitude)
+            val bounds = LatLngBounds.Builder().
+            include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 0.0)).
+            include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 90.0)).
+            include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 180.0)).
+            include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 270.0)).
+            build()
+            locationAutocompleteFragment.setLocationBias(RectangularBounds.newInstance(bounds))
+        }
+
+        locationAutocompleteFragment.setOnPlaceSelectedListener(object : PlaceSelectionListener {
+            override fun onPlaceSelected(place: Place) {
+                selectedPlace = place
+                Log.i(TAG, "Place: ${place.latLng}")
+            }
+
+            override fun onError(status: Status) {
+                Log.i(TAG, "An error occurred: $status")
+            }
+        })
+
+
 
         val currentDateTime = LocalDateTime.now()
 
@@ -97,21 +154,22 @@ class ReportFragment : Fragment() {
     }
 
     private fun reportFB(){
-        val location = requireActivity().findViewById<EditText>(R.id.reportLocation)?.text.toString()
         val date = requireActivity().findViewById<EditText>(R.id.reportDate)?.text.toString()
         val time = requireActivity().findViewById<EditText>(R.id.reportTime)?.text.toString()
         val noofpeople = requireActivity().findViewById<EditText>(R.id.reportNumPeople)?.text.toString()
         val currentFirebaseUserEmail = FirebaseAuth.getInstance().currentUser?.email
 
-        if (location.isEmpty() || date.isEmpty() || noofpeople.isEmpty() || time.isEmpty()) {
+        if (selectedPlace == null || date.isEmpty() || noofpeople.isEmpty() || time.isEmpty()) {
             Toast.makeText(activity, "One of the above fields is empty !", Toast.LENGTH_SHORT).show()
             return
         }
 
-        database.child("report").child(location).child("useremail").setValue(currentFirebaseUserEmail)
-        database.child("report").child(location).child("noofpeople").setValue(noofpeople)
-        database.child("report").child(location).child("date").setValue(date)
-        database.child("report").child(location).child("time").setValue(time)
+        val placeLatLngString = selectedPlace!!.latLng.toString()
+
+        database.child("report").child(placeLatLngString).child("useremail").setValue(currentFirebaseUserEmail)
+        database.child("report").child(placeLatLngString).child("noofpeople").setValue(noofpeople)
+        database.child("report").child(placeLatLngString).child("date").setValue(date)
+        database.child("report").child(placeLatLngString).child("time").setValue(time)
     }
 
 
