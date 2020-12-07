@@ -83,7 +83,8 @@
                 <TextView
                     android:id="@+id/alertTextZone"
                     android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_height="40sp"
+                    android:gravity="center_vertical"
                     android:textColor="#000000"
                     android:textSize="18sp" />
 
