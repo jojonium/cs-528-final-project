@@ -29,9 +29,13 @@ import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.maps.android.SphericalUtil
+import edu.wpi.cs528finalproject.FirebaseEncoder
 import edu.wpi.cs528finalproject.LocationChangedListener
 import edu.wpi.cs528finalproject.NavigationActivity
 import edu.wpi.cs528finalproject.R
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
 
 
 class ReportFragment : Fragment() {
@@ -44,7 +48,7 @@ class ReportFragment : Fragment() {
     private var timeDialog: TimePickerDialog? = null
 
     private var currentLocation: Location? = null
-    private val biasRadius = 5000.0
+    private val biasRadius = 1000.0
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -115,7 +119,7 @@ class ReportFragment : Fragment() {
             if (hasFocus) {
                 if (dateDialog == null) {
                     dateDialog = DatePickerDialog(requireContext(), dateSetListener,
-                        currentDateTime.year, currentDateTime.monthValue,
+                        currentDateTime.year, currentDateTime.monthValue - 1,
                         currentDateTime.dayOfMonth)
                     dateDialog!!.show()
                 }
@@ -128,9 +132,17 @@ class ReportFragment : Fragment() {
         val timeText = root.findViewById<EditText>(R.id.reportTime)
         val timeSetListener: TimePickerDialog.OnTimeSetListener =
             TimePickerDialog.OnTimeSetListener { _, hourOfDay, minute ->
+                var hour = hourOfDay
+                var period = "AM"
+                if (hourOfDay >= 12) {
+                    period = "PM"
+                    hour = hourOfDay - 12
+                }
+                if (hour == 0) {
+                    hour = 12
+                }
                 timeText.text = Editable.Factory.getInstance().newEditable(
-                    "%d:%02d %s".format(if (hourOfDay <= 12) hourOfDay else hourOfDay - 12,
-                        minute, if (hourOfDay <= 12) "AM" else "PM"))
+                    "%d:%02d %s".format(hour, minute, period))
             }
 
         timeText.setOnFocusChangeListener { _, hasFocus ->
@@ -176,10 +188,16 @@ class ReportFragment : Fragment() {
 
         val placeLatLngString = selectedPlace!!.latLng.toString()
 
-        database.child("report").child(placeLatLngString).child("useremail").setValue(currentFirebaseUserEmail)
-        database.child("report").child(placeLatLngString).child("noofpeople").setValue(noofpeople)
-        database.child("report").child(placeLatLngString).child("date").setValue(date)
-        database.child("report").child(placeLatLngString).child("time").setValue(time)
+        val currentTz = ZoneId.systemDefault()
+        val currentZoneDateTime = ZonedDateTime.parse("$date $time",
+        DateTimeFormatter.ofPattern("MM/dd/yyyy h:mm a").withZone(currentTz))
+        val timestamp = currentZoneDateTime.toInstant().epochSecond
+
+        val encodedLatLng = FirebaseEncoder.encodeForFirebaseKey(placeLatLngString)
+
+        database.child("report").child(encodedLatLng).child("useremail").setValue(currentFirebaseUserEmail)
+        database.child("report").child(encodedLatLng).child("noofpeople").setValue(noofpeople.toLong())
+        database.child("report").child(encodedLatLng).child("timestamp").setValue(timestamp)
         return true
     }
 
