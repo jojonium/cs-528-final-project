@@ -1,5 +1,6 @@
 package edu.wpi.cs528finalproject
 
+// From https://stackoverflow.com/a/39561350/6465849
 object FirebaseEncoder {
     fun encodeForFirebaseKey(s: String): String {
         return s
