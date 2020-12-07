@@ -10,6 +10,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import com.google.android.libraries.places.api.Places
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import edu.wpi.cs528finalproject.location.LocationUpdatesService
 import edu.wpi.cs528finalproject.ui.home.HomeFragment
@@ -70,6 +71,7 @@ class NavigationActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Places.initialize(applicationContext, getString(R.string.google_places_key))
         myReceiver = MyReceiver()
         setContentView(R.layout.activity_navigation)
         val navView: BottomNavigationView = findViewById(R.id.nav_view)
