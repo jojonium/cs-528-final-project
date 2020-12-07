@@ -120,7 +120,7 @@ class HomeFragment :
                     val city = address.locality
                     if (city != previousCity) {
                         previousCity = city
-                        Fuel.post("http://covidtraveler-env.eba-2ze4syip.us-east-2.elasticbeanstalk.com/")
+                        Fuel.post("https://hat1omnl1j.execute-api.us-east-2.amazonaws.com")
                                 .jsonBody("{ \"town\": \"$city\" }")
                                 .response { _, response, result ->
                                     handleCityDataResponse(response, result)
