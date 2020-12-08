@@ -64,7 +64,7 @@ class HomeFragment :
     private var selectedPoi: PointOfInterest? = null
     private var previousCity = ""
     private var currentLocation: Location? = null
-    private var Markers: HashMap<*, *>? = null
+    private var markers: HashMap<*, *>? = null
 
     private lateinit var database: DatabaseReference
 
@@ -171,21 +171,21 @@ class HomeFragment :
 
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if (dataSnapshot.value != null) {
-                    Markers = dataSnapshot.value as HashMap<*, *>
+                    markers = dataSnapshot.value as HashMap<*, *>
                 }
-                if (Markers != null) {
-                    for ((key, value) in Markers!!) {
+                if (markers != null) {
+                    for ((key, value) in markers!!) {
                         val latlong = FirebaseEncoder.decodeFromFirebaseKey(key.toString())
                         val lat = latlong.split('(')[1].split(',')[0].toDouble()
                         val long = latlong.split(',')[1].replace(")", "").toDouble()
                         val point = LatLng(lat, long)
                         val tempValue = value as HashMap<*,*>
-                        var test = System.currentTimeMillis() - 86400000
-                        if(tempValue.get("timestamp") as Long > test) {
+                        val test = System.currentTimeMillis() - 86400000
+                        if(tempValue["timestamp"] as Long > test) {
                             mMap?.addMarker(
                                     MarkerOptions()
                                             .position(point)
-                                            .title(tempValue.get("noofpeople").toString() + " people not wearing masks reported")
+                                            .title(tempValue["noofpeople"].toString() + " people not wearing masks reported")
                             )
                         }
                     }
@@ -282,8 +282,8 @@ class HomeFragment :
         mMap?.setOnMapClickListener(this)
         requestLocationPermissions()
 
-        if (Markers != null) {
-            for ((key, value) in Markers!!) {
+        if (markers != null) {
+            for ((key, value) in markers!!) {
 //                googleMap?.addMarker(
 //                        MarkerOptions()
 //                                .position(key)
