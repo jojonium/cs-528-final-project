@@ -47,7 +47,8 @@
                 android:layout_width="75dp"
                 android:layout_height="75dp"
                 android:background="@drawable/round_button"
-                app:srcCompat="@drawable/ic_camera" />
+                app:srcCompat="@drawable/ic_camera"
+                android:clickable="false"/>
         </LinearLayout>
 
         <ImageView
