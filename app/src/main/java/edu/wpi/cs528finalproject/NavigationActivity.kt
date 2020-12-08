@@ -1,30 +1,23 @@
 package edu.wpi.cs528finalproject
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.*
-import android.content.pm.PackageManager
 import android.location.Location
-import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
-import android.util.Log
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
-import com.google.android.gms.tasks.Task
+import androidx.preference.PreferenceManager
 import com.google.android.libraries.places.api.Places
-import com.google.android.libraries.places.api.model.Place
-import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
-import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse
-import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import edu.wpi.cs528finalproject.location.LocationUpdatesService
+import edu.wpi.cs528finalproject.location.LocationUpdatesService.Companion.KEY_SHOW_CHECKIN_ALERT
 import edu.wpi.cs528finalproject.ui.home.HomeFragment
 import edu.wpi.cs528finalproject.ui.upload.UploadFragment
-import java.time.LocalDateTime
 
 interface LocationChangedListener {
     fun onLocationChanged(location: Location?)
@@ -95,6 +88,30 @@ class NavigationActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
         navView.setupWithNavController(navController)
+        addOnLocationChangedListener(object : LocationChangedListener {
+            override fun onLocationChanged(location: Location?) {
+                if (PreferenceManager.getDefaultSharedPreferences(this@NavigationActivity)
+                        .getBoolean(KEY_SHOW_CHECKIN_ALERT, false)) {
+                    val dialog = AlertDialog.Builder(this@NavigationActivity)
+                        .setTitle(R.string.check_in_title)
+                        .setMessage(R.string.check_in_content)
+                        .setPositiveButton(android.R.string.ok
+                        ) { _, _ ->
+                            val uploadIntent =
+                                Intent(this@NavigationActivity, NavigationActivity::class.java)
+                            uploadIntent.putExtra(KEY_START_UPLOAD_FRAGMENT, true)
+                            startActivity(uploadIntent)
+                        }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .create()
+                    dialog.show()
+                    PreferenceManager.getDefaultSharedPreferences(this@NavigationActivity)
+                        .edit()
+                        .putBoolean(KEY_SHOW_CHECKIN_ALERT, false)
+                        .apply()
+                }
+            }
+        })
     }
 
     override fun onStart() {
@@ -118,6 +135,10 @@ class NavigationActivity : AppCompatActivity() {
             val navController = navHostFragment.navController
             val action = MobileNavigationDirections.actionGlobalNavigationUpload(true)
             navController.navigate(action)
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .edit()
+                .putBoolean(KEY_START_UPLOAD_FRAGMENT, false)
+                .apply()
         }
     }
 

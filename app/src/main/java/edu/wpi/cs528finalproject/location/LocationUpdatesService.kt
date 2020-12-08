@@ -102,6 +102,7 @@ class LocationUpdatesService : Service() {
     private var currentPlace: Place? = null
     private var entryTime = 0L
     private var sentCheckInForCurrentPlace = false
+    private var checkedInCurrentPlace = false
 
     private lateinit var database: DatabaseReference
 
@@ -336,6 +337,10 @@ class LocationUpdatesService : Service() {
                 val now = Instant.now().toEpochMilli()
                 if (!sentCheckInForCurrentPlace && now - entryTime >= DWELL_TIME) {
                     sentCheckInForCurrentPlace = true
+                    if (checkedInCurrentPlace) {
+                        return false
+                    }
+                    checkedInCurrentPlace = true
                     return true
                 }
             } else if (currentPlace != newPlace) {
@@ -377,18 +382,10 @@ class LocationUpdatesService : Service() {
             mNotificationManager.notify(CHECK_IN_NOTIFICATION_ID, builder.build())
         } else {
             // Create dialog
-            AlertDialog.Builder(this)
-                .setTitle(R.string.check_in_title)
-                .setMessage(R.string.check_in_content)
-                .setPositiveButton(android.R.string.ok
-                ) { _, _ ->
-                    val uploadIntent =
-                        Intent(this@LocationUpdatesService, NavigationActivity::class.java)
-                    uploadIntent.putExtra(NavigationActivity.KEY_START_UPLOAD_FRAGMENT, true)
-                    startActivity(uploadIntent)
-                }
-                .setNegativeButton(android.R.string.cancel, null)
-                .create()
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .edit()
+                .putBoolean(KEY_SHOW_CHECKIN_ALERT, true)
+                .apply()
         }
         setCheckInTimer()
     }
@@ -401,9 +398,8 @@ class LocationUpdatesService : Service() {
             override fun run() {
                 val photoSubmitted = PreferenceManager.getDefaultSharedPreferences(this@LocationUpdatesService)
                     .getBoolean(KEY_CHECKIN_PHOTO_SUBMITTED, false)
-                checkInHandler!!.postDelayed(this, CHECK_IN_TIME_LIMIT)
-                if (!photoSubmitted) {
 
+                if (!photoSubmitted) {
                     var numPrompts = 0L
                     val valueEventListener = object : ValueEventListener {
                         override fun onCancelled(databaseError: DatabaseError) {
@@ -415,6 +411,7 @@ class LocationUpdatesService : Service() {
                                 ?: 0L) as Long
                         }
                     }
+                    checkedInCurrentPlace = true
 
                     val currentFirebaseUser = FirebaseAuth.getInstance().currentUser?.email?.split('@')?.get(0)
                         ?: "No User"
@@ -422,6 +419,8 @@ class LocationUpdatesService : Service() {
                     val ref = database.child("maskWearing").child(currentFirebaseUser)
                     ref.addListenerForSingleValueEvent(valueEventListener)
                     database.child("maskWearing").child(currentFirebaseUser).child("numberOfTimesPromptedToWearMask").setValue(numPrompts + 1)
+
+                    checkInHandler!!.postDelayed(this, CHECK_IN_TIME_LIMIT)
                 }
             }
         }
@@ -666,11 +665,14 @@ class LocationUpdatesService : Service() {
         private const val CHECK_IN_NOTIFICATION_ID = 14
 
         // Parameters to determine whether user is at a place
-        private const val DWELL_TIME = 5 * 60 * 1000L  // 5 minutes
+//        private const val DWELL_TIME = 5 * 60 * 1000L  // 5 minutes
+        private const val DWELL_TIME = 1 * 20 * 1000L  // 5 minutes  // TODO: Change
         private const val MAX_DISTANCE = 500
-        const val CHECK_IN_TIME_LIMIT = 5 * 60 * 1000L  // 5 minutes
+//        const val CHECK_IN_TIME_LIMIT = 5 * 60 * 1000L  // 5 minutes  // TODO: Change
+        const val CHECK_IN_TIME_LIMIT = 1 * 20 * 1000L  // 5 minutes
 
         const val KEY_CHECKIN_TIMESTAMP = "checkin_timestamp"
         const val KEY_CHECKIN_PHOTO_SUBMITTED = "checkin_photo_submitted"
+        const val KEY_SHOW_CHECKIN_ALERT = "show_checkin_alert"
     }
 }
