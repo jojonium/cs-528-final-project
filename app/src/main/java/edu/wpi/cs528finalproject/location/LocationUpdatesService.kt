@@ -665,11 +665,11 @@ class LocationUpdatesService : Service() {
         private const val CHECK_IN_NOTIFICATION_ID = 14
 
         // Parameters to determine whether user is at a place
-//        private const val DWELL_TIME = 5 * 60 * 1000L  // 5 minutes
-        private const val DWELL_TIME = 1 * 20 * 1000L  // 5 minutes  // TODO: Change
+        private const val DWELL_TIME = 5 * 60 * 1000L  // 5 minutes
+//        private const val DWELL_TIME = 1 * 20 * 1000L  // 5 minutes
         private const val MAX_DISTANCE = 500
-//        const val CHECK_IN_TIME_LIMIT = 5 * 60 * 1000L  // 5 minutes  // TODO: Change
-        const val CHECK_IN_TIME_LIMIT = 1 * 20 * 1000L  // 5 minutes
+        const val CHECK_IN_TIME_LIMIT = 5 * 60 * 1000L  // 5 minutes
+//        const val CHECK_IN_TIME_LIMIT = 1 * 20 * 1000L  // 5 minutes
 
         const val KEY_CHECKIN_TIMESTAMP = "checkin_timestamp"
         const val KEY_CHECKIN_PHOTO_SUBMITTED = "checkin_photo_submitted"
