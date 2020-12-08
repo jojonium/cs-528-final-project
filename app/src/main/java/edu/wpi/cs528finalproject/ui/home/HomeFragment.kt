@@ -33,11 +33,19 @@ import com.google.android.libraries.places.api.model.RectangularBounds
 import com.google.android.libraries.places.api.model.TypeFilter
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
 import com.google.maps.android.SphericalUtil
 import edu.wpi.cs528finalproject.*
 import edu.wpi.cs528finalproject.location.CityData
 import edu.wpi.cs528finalproject.location.CityDataWrapper
 import java.util.*
+import kotlin.collections.HashMap
+import kotlin.math.log
 
 class HomeFragment :
         Fragment(),
@@ -57,7 +65,9 @@ class HomeFragment :
     private var selectedPoi: PointOfInterest? = null
     private var previousCity = ""
     private var currentLocation: Location? = null
+    private var Markers : HashMap<*,*>?= null
 
+    private lateinit var database: DatabaseReference
 
     override fun onCreateView(
             inflater: LayoutInflater,
@@ -108,7 +118,8 @@ class HomeFragment :
                 Log.i(ContentValues.TAG, "An error occurred: $status")
             }
         })
-
+        database = Firebase.database.reference
+        getFriebaseReportdata()
         mapView = root.findViewById(R.id.mapView)
         mapView?.onCreate(savedInstanceState)
         mapView?.getMapAsync(this)
@@ -141,6 +152,33 @@ class HomeFragment :
             }
         })
         return root
+    }
+
+    private fun getFriebaseReportdata(){
+        val reportEventListener = object : ValueEventListener {
+            override fun onCancelled(databaseError: DatabaseError) {
+                // handle error
+            }
+
+            override fun onDataChange(dataSnapshot: DataSnapshot) {
+                Markers = dataSnapshot.value as HashMap<*, *>
+                if (!(Markers == null)) {
+                    for ((key, value) in Markers!!) {
+                        val latlong = FirebaseEncoder.decodeFromFirebaseKey(key.toString())
+                        val lat = latlong.split('(')[1].split(',')[0].toDouble()
+                        val long = latlong.split(',')[1].replace(")","").toDouble()
+                        val point = LatLng(lat, long)
+                        mMap?.addMarker(
+                                MarkerOptions()
+                                        .position(point)
+                                        .title("Marker in Sydney")
+                        )
+                    }
+                }
+            }
+        }
+        val ref = database.child("report")
+        ref.addListenerForSingleValueEvent(reportEventListener)
     }
 
     private fun handleCityDataResponse(response: Response, result: Result<ByteArray, FuelError>) {
@@ -224,7 +262,17 @@ class HomeFragment :
         mMap?.setOnPoiClickListener(this)
         mMap?.setOnMapClickListener(this)
         requestLocationPermissions()
+
+        if (!(Markers == null)) {
+            for ((key, value) in Markers!!) {
+//                googleMap?.addMarker(
+//                        MarkerOptions()
+//                                .position(key)
+//                )
+            }
+        }
     }
+
 
     override fun onMapClick(latLng: LatLng) {
         marker?.remove()
