@@ -3,10 +3,13 @@ package edu.wpi.cs528finalproject.ui.profile
 import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Button
+import android.widget.EditText
+import android.widget.Toast
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
@@ -14,6 +17,7 @@ import com.github.mikephil.charting.data.BarData
 import com.github.mikephil.charting.data.BarDataSet
 import com.github.mikephil.charting.data.BarEntry
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
@@ -47,10 +51,15 @@ class ProfileFragment : Fragment() {
 //            textView.text = it
 //        })
         val signoutButton = root.findViewById<Button>(R.id.button)
+        val updatePasswordButton = root.findViewById<Button>(R.id.button4)
         database = Firebase.database.reference
 
         signoutButton.setOnClickListener {
             SignOutUser()
+        }
+
+        updatePasswordButton.setOnClickListener{
+            UpdatePassword()
         }
 
         // Calculate the percentage of times the user wears his or her mask based on the data in firebase
@@ -164,6 +173,19 @@ class ProfileFragment : Fragment() {
         val intent = Intent(activity, LoginActivity::class.java)
         FirebaseAuth.getInstance().signOut();
         startActivity(intent)
+    }
+
+    private fun UpdatePassword(){
+        val usernewPassword = view?.findViewById<EditText>(R.id.passworChangeInput)?.text.toString()
+        val user = Firebase.auth.currentUser
+        
+        user!!.updatePassword(usernewPassword).addOnCompleteListener { task ->
+            if (task.isSuccessful) {
+                Toast.makeText(activity, "Update Password Successful!", Toast.LENGTH_SHORT).show()
+            } else {
+                Toast.makeText(activity, "Something Went Wrong  !", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     private fun setUpBarChart(percentileArray: FloatArray){
