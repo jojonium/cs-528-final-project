@@ -43,6 +43,7 @@ import com.google.maps.android.SphericalUtil
 import edu.wpi.cs528finalproject.*
 import edu.wpi.cs528finalproject.location.CityData
 import edu.wpi.cs528finalproject.location.CityDataWrapper
+import java.time.LocalDateTime
 import java.util.*
 import kotlin.collections.HashMap
 import kotlin.math.log
@@ -161,17 +162,20 @@ class HomeFragment :
             }
 
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                Markers = dataSnapshot.value as HashMap<*, *>
+                if(!(dataSnapshot.value == null)){
+                    Markers = dataSnapshot.value as HashMap<*, *>
+                }
                 if (!(Markers == null)) {
                     for ((key, value) in Markers!!) {
                         val latlong = FirebaseEncoder.decodeFromFirebaseKey(key.toString())
                         val lat = latlong.split('(')[1].split(',')[0].toDouble()
                         val long = latlong.split(',')[1].replace(")","").toDouble()
                         val point = LatLng(lat, long)
+                        val tempValue = value as HashMap<*,*>
                         mMap?.addMarker(
                                 MarkerOptions()
                                         .position(point)
-                                        .title("Marker in Sydney")
+                                        .title(tempValue.get("noofpeople").toString()+" people not wearing masks reported")
                         )
                     }
                 }
