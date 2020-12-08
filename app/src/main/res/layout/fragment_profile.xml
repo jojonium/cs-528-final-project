@@ -93,6 +93,43 @@
             android:background="@color/red"
             android:backgroundTint="@color/red" />
 
+        <TextView
+            android:id="@+id/passwordChange"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="5sp"
+            android:layout_marginStart="20sp"
+            android:layout_marginTop="20sp"
+            android:text="@string/changePassword"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <EditText
+                android:id="@+id/passworChangeInput"
+                android:layout_width="220sp"
+                android:layout_height="wrap_content"
+                android:layout_marginVertical="5sp"
+                android:layout_marginStart="20sp"
+                android:layout_marginEnd="20sp"
+                android:ems="20"
+                android:hint="@string/atleast"
+                android:inputType="textPassword"
+                android:textSize="14sp" />
+
+            <Button
+                android:id="@+id/button4"
+                android:layout_width="0sp"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="20sp"
+                android:layout_weight="1"
+                android:text="@string/update"
+                android:textSize="10sp" />
+        </LinearLayout>
+
         <com.google.android.material.button.MaterialButton
             android:id="@+id/button"
             android:layout_width="match_parent"
