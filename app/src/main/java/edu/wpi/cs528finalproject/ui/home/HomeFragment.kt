@@ -43,16 +43,14 @@ import com.google.maps.android.SphericalUtil
 import edu.wpi.cs528finalproject.*
 import edu.wpi.cs528finalproject.location.CityData
 import edu.wpi.cs528finalproject.location.CityDataWrapper
-import java.time.LocalDateTime
 import java.util.*
 import kotlin.collections.HashMap
-import kotlin.math.log
 
 class HomeFragment :
-        Fragment(),
-        OnMapReadyCallback,
-        GoogleMap.OnPoiClickListener,
-        GoogleMap.OnMapClickListener {
+    Fragment(),
+    OnMapReadyCallback,
+    GoogleMap.OnPoiClickListener,
+    GoogleMap.OnMapClickListener {
 
     private lateinit var homeViewModel: HomeViewModel
     private var mMap: GoogleMap? = null
@@ -66,17 +64,17 @@ class HomeFragment :
     private var selectedPoi: PointOfInterest? = null
     private var previousCity = ""
     private var currentLocation: Location? = null
-    private var Markers : HashMap<*,*>?= null
+    private var Markers: HashMap<*, *>? = null
 
     private lateinit var database: DatabaseReference
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View? {
         homeViewModel =
-                ViewModelProvider(this).get(HomeViewModel::class.java)
+            ViewModelProvider(this).get(HomeViewModel::class.java)
 
         val root = inflater.inflate(R.layout.fragment_home, container, false)
 
@@ -88,63 +86,73 @@ class HomeFragment :
             childFragmentManager.findFragmentById(R.id.search_bar_home)
                     as AutocompleteSupportFragment
 
-        locationAutocompleteFragment = locationAutocompleteFragment.setHint(getString(R.string.LocationHint))
-        locationAutocompleteFragment = locationAutocompleteFragment.setPlaceFields(listOf(
-            Place.Field.LAT_LNG, Place.Field.ADDRESS,
-            Place.Field.NAME))
-        locationAutocompleteFragment = locationAutocompleteFragment.setTypeFilter(TypeFilter.ESTABLISHMENT)
+        locationAutocompleteFragment =
+            locationAutocompleteFragment.setHint(getString(R.string.LocationHint))
+        locationAutocompleteFragment = locationAutocompleteFragment.setPlaceFields(
+            listOf(
+                Place.Field.LAT_LNG, Place.Field.ADDRESS,
+                Place.Field.NAME
+            )
+        )
+        locationAutocompleteFragment =
+            locationAutocompleteFragment.setTypeFilter(TypeFilter.ESTABLISHMENT)
 
         val tempLoc = currentLocation
         if (tempLoc != null) {
             val currentLocationLatLng = LatLng(tempLoc.latitude, tempLoc.longitude)
-            val bounds = LatLngBounds.Builder().
-            include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 0.0)).
-            include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 90.0)).
-            include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 180.0)).
-            include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 270.0)).
-            build()
+            val bounds = LatLngBounds.Builder()
+                .include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 0.0))
+                .include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 90.0))
+                .include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 180.0))
+                .include(SphericalUtil.computeOffset(currentLocationLatLng, biasRadius, 270.0))
+                .build()
             locationAutocompleteFragment = locationAutocompleteFragment.setLocationBias(
-                RectangularBounds.newInstance(bounds))
+                RectangularBounds.newInstance(bounds)
+            )
         }
 
-        locationAutocompleteFragment = locationAutocompleteFragment.setOnPlaceSelectedListener(object :
-            PlaceSelectionListener {
-            override fun onPlaceSelected(place: Place) {
-                place.latLng?.let { showPlace(it) }
-                locationAutocompleteFragment = locationAutocompleteFragment.setText(place.address)
-                Log.i(ContentValues.TAG, "Place: ${place.latLng}")
-            }
+        locationAutocompleteFragment =
+            locationAutocompleteFragment.setOnPlaceSelectedListener(object :
+                PlaceSelectionListener {
+                override fun onPlaceSelected(place: Place) {
+                    place.latLng?.let { showPlace(it) }
+                    locationAutocompleteFragment =
+                        locationAutocompleteFragment.setText(place.address)
+                    Log.i(ContentValues.TAG, "Place: ${place.latLng}")
+                }
 
-            override fun onError(status: Status) {
-                Log.i(ContentValues.TAG, "An error occurred: $status")
-            }
-        })
+                override fun onError(status: Status) {
+                    Log.i(ContentValues.TAG, "An error occurred: $status")
+                }
+            })
         database = Firebase.database.reference
         mapView = root.findViewById(R.id.mapView)
         mapView?.onCreate(savedInstanceState)
         mapView?.getMapAsync(this)
-        (requireActivity() as NavigationActivity).addOnLocationChangedListener(object : LocationChangedListener {
+        (requireActivity() as NavigationActivity).addOnLocationChangedListener(object :
+            LocationChangedListener {
             override fun onLocationChanged(location: Location?) {
                 if (location != null) {
                     val geocoder = Geocoder(requireContext(), Locale.getDefault())
-                    val address = geocoder.getFromLocation(location.latitude, location.longitude, 1)[0]
+                    val address =
+                        geocoder.getFromLocation(location.latitude, location.longitude, 1)[0]
                     val city = address.locality
                     if (city != previousCity) {
                         previousCity = city
                         Fuel.post("https://hat1omnl1j.execute-api.us-east-2.amazonaws.com")
-                                .jsonBody("{ \"town\": \"$city\" }")
-                                .response { _, response, result ->
-                                    handleCityDataResponse(response, result)
-                                }
+                            .jsonBody("{ \"town\": \"$city\" }")
+                            .response { _, response, result ->
+                                handleCityDataResponse(response, result)
+                            }
                     }
                     if (currentLocation == null) {
                         mMap?.moveCamera(
-                                CameraUpdateFactory.newLatLngZoom(
-                                        LatLng(
-                                                location.latitude,
-                                                location.longitude
-                                        ), defaultZoom
-                                )
+                            CameraUpdateFactory.newLatLngZoom(
+                                LatLng(
+                                    location.latitude,
+                                    location.longitude
+                                ), defaultZoom
+                            )
                         )
                     }
                     currentLocation = location
@@ -155,21 +163,21 @@ class HomeFragment :
         return root
     }
 
-    private fun getFriebaseReportdata(){
+    private fun getFirebaseReportData() {
         val reportEventListener = object : ValueEventListener {
             override fun onCancelled(databaseError: DatabaseError) {
                 // handle error
             }
 
             override fun onDataChange(dataSnapshot: DataSnapshot) {
-                if(!(dataSnapshot.value == null)){
+                if (dataSnapshot.value != null) {
                     Markers = dataSnapshot.value as HashMap<*, *>
                 }
-                if (!(Markers == null)) {
+                if (Markers != null) {
                     for ((key, value) in Markers!!) {
                         val latlong = FirebaseEncoder.decodeFromFirebaseKey(key.toString())
                         val lat = latlong.split('(')[1].split(',')[0].toDouble()
-                        val long = latlong.split(',')[1].replace(")","").toDouble()
+                        val long = latlong.split(',')[1].replace(")", "").toDouble()
                         val point = LatLng(lat, long)
                         val tempValue = value as HashMap<*,*>
                         var test = System.currentTimeMillis() - 86400000
@@ -193,41 +201,43 @@ class HomeFragment :
         if (bytes == null || error != null) {
             displayDataError("An error occurred while fetching COVID data from the network.")
             Log.e("CityAPI", error.toString())
-            return;
+            return
         }
         if (response.statusCode == 404 || bytes.isEmpty()) {
             displayDataError("No COVID data is available for your current location.")
-            return;
+            return
         }
         val json = String(response.data)
         Log.d("CityAPI", json)
         val cityData: CityData?
         try {
             val cityDataWrapper = Klaxon()
-                    .parse<CityDataWrapper>(json) ?: throw Error("cityDataWrapper is null")
+                .parse<CityDataWrapper>(json) ?: throw Error("cityDataWrapper is null")
             cityData = Klaxon()
-                    .parseArray<CityData>(cityDataWrapper.body)?.get(0)
-                    ?: throw Error("cityData is null")
+                .parseArray<CityData>(cityDataWrapper.body)?.get(0)
+                ?: throw Error("cityData is null")
 
         } catch (error: Error) {
             Log.e("CityAPI", error.toString())
             displayDataError("Received an invalid response from the server.")
-            return;
+            return
         }
         displayCityData(cityData)
     }
 
     private fun displayCityData(cityData: CityData) {
         activity?.runOnUiThread {
-            alertTextNumCasesView.text = resources.getString(R.string.safetyTextNumCases, cityData.twoWeekCaseCounts)
-            alertTextZoneView.text = resources.getString(R.string.safetyTextThreatLevel, cityData.covidLevel)
+            alertTextNumCasesView.text =
+                resources.getString(R.string.safetyTextNumCases, cityData.twoWeekCaseCounts)
+            alertTextZoneView.text =
+                resources.getString(R.string.safetyTextThreatLevel, cityData.covidLevel)
             alertCircle.background.setTint(
-                    mapOf(
-                            "Red" to 0xFFFF0000,
-                            "Yellow" to 0xFFFFFF00,
-                            "Green" to 0xFF008000,
-                            "Grey" to 0xFF808080
-                    )[cityData.covidLevel]?.toInt() ?: 0
+                mapOf(
+                    "Red" to 0xFFFF0000,
+                    "Yellow" to 0xFFFFFF00,
+                    "Green" to 0xFF008000,
+                    "Grey" to 0xFF808080
+                )[cityData.covidLevel]?.toInt() ?: 0
             )
         }
     }
@@ -244,19 +254,21 @@ class HomeFragment :
     fun requestLocationPermissions() {
         if (mMap == null) return
         if (ActivityCompat.checkSelfPermission(
-                        this.requireContext(),
-                        Manifest.permission.ACCESS_FINE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
-                        this.requireContext(),
-                        Manifest.permission.ACCESS_COARSE_LOCATION
-                ) != PackageManager.PERMISSION_GRANTED
+                this.requireContext(),
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this.requireContext(),
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
         ) {
             if (Build.VERSION.SDK_INT >= 23) {
                 PermissionUtils.requestPermission(
-                        this.requireActivity() as AppCompatActivity, PermissionRequestCodes.enableMapView,
-                        Manifest.permission.ACCESS_FINE_LOCATION, false,
-                        R.string.location_permission_required,
-                        R.string.location_permission_rationale
+                    this.requireActivity() as AppCompatActivity,
+                    PermissionRequestCodes.enableMapView,
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    false,
+                    R.string.location_permission_required,
+                    R.string.location_permission_rationale
                 )
             }
         } else {
@@ -270,7 +282,7 @@ class HomeFragment :
         mMap?.setOnMapClickListener(this)
         requestLocationPermissions()
 
-        if (!(Markers == null)) {
+        if (Markers != null) {
             for ((key, value) in Markers!!) {
 //                googleMap?.addMarker(
 //                        MarkerOptions()
