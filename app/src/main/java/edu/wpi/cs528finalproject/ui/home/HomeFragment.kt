@@ -120,7 +120,6 @@ class HomeFragment :
             }
         })
         database = Firebase.database.reference
-        getFriebaseReportdata()
         mapView = root.findViewById(R.id.mapView)
         mapView?.onCreate(savedInstanceState)
         mapView?.getMapAsync(this)
@@ -152,6 +151,7 @@ class HomeFragment :
                 }
             }
         })
+        getFriebaseReportdata()
         return root
     }
 
@@ -172,11 +172,14 @@ class HomeFragment :
                         val long = latlong.split(',')[1].replace(")","").toDouble()
                         val point = LatLng(lat, long)
                         val tempValue = value as HashMap<*,*>
-                        mMap?.addMarker(
-                                MarkerOptions()
-                                        .position(point)
-                                        .title(tempValue.get("noofpeople").toString()+" people not wearing masks reported")
-                        )
+                        var test = System.currentTimeMillis() - 86400000
+                        if(tempValue.get("timestamp") as Long > test) {
+                            mMap?.addMarker(
+                                    MarkerOptions()
+                                            .position(point)
+                                            .title(tempValue.get("noofpeople").toString() + " people not wearing masks reported")
+                            )
+                        }
                     }
                 }
             }
