@@ -23,6 +23,7 @@ import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import edu.wpi.cs528finalproject.location.LocationUpdatesService
 import edu.wpi.cs528finalproject.ui.home.HomeFragment
+import edu.wpi.cs528finalproject.ui.upload.UploadFragment
 import java.time.LocalDateTime
 
 interface LocationChangedListener {
@@ -39,6 +40,10 @@ class NavigationActivity : AppCompatActivity() {
 
     // Tracks the bound state of the service.
     private var mBound = false
+
+    companion object {
+        const val KEY_START_UPLOAD_FRAGMENT = "start_upload_fragment"
+    }
 
     /**
      * Receiver for broadcasts sent by [LocationUpdatesService].
@@ -100,6 +105,20 @@ class NavigationActivity : AppCompatActivity() {
             Intent(this, LocationUpdatesService::class.java), mServiceConnection,
             BIND_AUTO_CREATE
         )
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent != null && intent.getBooleanExtra(KEY_START_UPLOAD_FRAGMENT, false)) {
+            val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+            val uploadFragment = UploadFragment()
+            val bundle = Bundle()
+            bundle.putBoolean(UploadFragment.KEY_UPLOAD_CLICK, true)
+            uploadFragment.arguments = bundle
+            val navController = navHostFragment.navController
+            val action = MobileNavigationDirections.actionGlobalNavigationUpload(true)
+            navController.navigate(action)
+        }
     }
 
     override fun onResume() {
@@ -207,6 +226,17 @@ class NavigationActivity : AppCompatActivity() {
                 } else {
                     DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationUpdatesService] = false
                     DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] = false
+                }
+            } else if (requestCode == PermissionRequestCodes.enableCamera) {
+                val navHostFragment =
+                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                val uploadFragment =
+                    navHostFragment.childFragmentManager.primaryNavigationFragment as UploadFragment
+                if (PermissionUtils.isPermissionGranted(
+                        permissions, grantResults, Manifest.permission.CAMERA)) {
+                    uploadFragment.requestCameraPermissions(false)
+                } else {
+                    uploadFragment.requestCameraPermissions(true)
                 }
             }
         }

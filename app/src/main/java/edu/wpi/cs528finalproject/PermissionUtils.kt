@@ -29,6 +29,7 @@ object PermissionRequestCodes {
     const val enableLocationUpdatesService = 0
     const val enableMapView = 1
     const val requestCurrentPlace = 2
+    const val enableCamera = 3
 }
 
 object DeferredPermissions {
