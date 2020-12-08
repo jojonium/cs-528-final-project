@@ -12,11 +12,15 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <uses-feature android:name="android.hardware.camera2" android:required="false"/>
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.front" android:required="false"/>
 
     <queries>
         <package android:name="com.google.android.apps.maps"/>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
     </queries>
 
     <application
@@ -42,7 +46,8 @@
 
         <activity
             android:name=".NavigationActivity"
-            android:label="@string/title_activity_navigation">
+            android:label="@string/title_activity_navigation"
+            android:launchMode="singleTop">
         </activity>
         <activity android:name=".LoginActivity"
             android:launchMode="singleInstance">

@@ -15,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
+import androidx.preference.PreferenceManager
 import com.beust.klaxon.Klaxon
 import com.github.kittinunf.fuel.Fuel
 import com.github.kittinunf.fuel.core.FuelError
@@ -22,8 +23,22 @@ import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.core.extensions.jsonBody
 import com.github.kittinunf.result.Result
 import com.google.android.gms.location.*
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
+import com.google.android.libraries.places.api.net.PlacesClient
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.ValueEventListener
+import com.google.firebase.database.ktx.database
+import com.google.firebase.ktx.Firebase
+import com.google.maps.android.SphericalUtil
 import edu.wpi.cs528finalproject.*
 import edu.wpi.cs528finalproject.R
+import java.time.Instant
 import java.util.*
 
 
@@ -50,6 +65,7 @@ class LocationUpdatesService : Service() {
      * place.
      */
     private var mChangingConfiguration = false
+    private var foregrounded = false
     private lateinit var mNotificationManager: NotificationManager
 
     /**
@@ -67,6 +83,7 @@ class LocationUpdatesService : Service() {
      */
     private var mLocationCallback: LocationCallback? = null
     private lateinit var mServiceHandler: Handler
+    private var checkInHandler: Handler? = null
 
     /**
      * The current location.
@@ -77,11 +94,24 @@ class LocationUpdatesService : Service() {
 
     private var curActivity: AppCompatActivity? = null
 
+    // Parameters for check-in
+    private var hasPlacePermission = false
+
+    private lateinit var mPlacesClient: PlacesClient
+
+    private var currentPlace: Place? = null
+    private var entryTime = 0L
+    private var sentCheckInForCurrentPlace = false
+    private var checkedInCurrentPlace = false
+
+    private lateinit var database: DatabaseReference
+
     fun setCurrentActivity(activity: AppCompatActivity) {
         curActivity = activity
     }
 
     override fun onCreate() {
+        database = Firebase.database.reference
         mFusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
         mLocationCallback = object : LocationCallback() {
             override fun onLocationResult(locationResult: LocationResult) {
@@ -89,6 +119,7 @@ class LocationUpdatesService : Service() {
                 onNewLocation(locationResult.lastLocation)
             }
         }
+        mPlacesClient = Places.createClient(this)
         createLocationRequest()
         lastLocation
         val handlerThread = HandlerThread(TAG)
@@ -100,11 +131,14 @@ class LocationUpdatesService : Service() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val name: CharSequence = getString(R.string.app_name)
             // Create the channel for the notification
-            val mChannel =
-                NotificationChannel(CHANNEL_ID, name, NotificationManager.IMPORTANCE_LOW)
+            val mServiceChannel =
+                NotificationChannel(SERVICE_CHANNEL_ID, name, NotificationManager.IMPORTANCE_LOW)
+            val mAlertChannel =
+                NotificationChannel(ALERT_CHANNEL_ID, name, NotificationManager.IMPORTANCE_HIGH)
 
             // Set the Notification Channel for the Notification Manager.
-            mNotificationManager.createNotificationChannel(mChannel)
+            mNotificationManager.createNotificationChannel(mServiceChannel)
+            mNotificationManager.createNotificationChannel(mAlertChannel)
         }
     }
 
@@ -135,6 +169,7 @@ class LocationUpdatesService : Service() {
         // when that happens.
         Log.i(TAG, "in onBind()")
         stopForeground(true)
+        foregrounded = false
         mChangingConfiguration = false
         return mBinder
     }
@@ -145,6 +180,7 @@ class LocationUpdatesService : Service() {
         // service when that happens.
         Log.i(TAG, "in onRebind()")
         stopForeground(true)
+        foregrounded = false
         mChangingConfiguration = false
         super.onRebind(intent)
     }
@@ -157,13 +193,15 @@ class LocationUpdatesService : Service() {
         // do nothing. Otherwise, we make this service a foreground service.
         if (!mChangingConfiguration && Utils.requestingLocationUpdates(this)) {
             Log.i(TAG, "Starting foreground service")
-            startForeground(NOTIFICATION_ID, notification)
+            foregrounded = true
+            startForeground(FOREGROUND_SERVICE_NOTIFICATION_ID, notification)
         }
         return true // Ensures onRebind() is called when a client re-binds.
     }
 
     override fun onDestroy() {
         mServiceHandler.removeCallbacksAndMessages(null)
+        checkInHandler?.removeCallbacksAndMessages(null)
     }
 
     /**
@@ -227,6 +265,167 @@ class LocationUpdatesService : Service() {
         }
     }
 
+    fun requestPlaceUpdates(activity: AppCompatActivity) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            if (Build.VERSION.SDK_INT >= 23) {
+                PermissionUtils.requestPermission(
+                    activity, PermissionRequestCodes.requestCurrentPlace,
+                    Manifest.permission.ACCESS_FINE_LOCATION, false,
+                    R.string.location_permission_required,
+                    R.string.location_permission_rationale
+                )
+            }
+        } else {
+            hasPlacePermission = true
+        }
+    }
+
+    private fun getCurrentPlace() {
+        if (hasPlacePermission) {
+            try {
+                // Get the likely places - that is, the businesses and other points of interest that
+                // are the best match for the device's current location.
+                // Use fields to define the data types to return.
+                val placeFields = listOf(Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG)
+
+                // Use the builder to create a FindCurrentPlaceRequest.
+                val request = FindCurrentPlaceRequest.newInstance(placeFields)
+
+                val placeResult = mPlacesClient.findCurrentPlace(request)
+                var returnPlace: Place? = null
+                placeResult.addOnCompleteListener { task ->
+                    if (task.isSuccessful && task.result != null) {
+                        val likelyPlaces = task.result
+                        if (likelyPlaces != null) {
+                            var maxLikelihood = 0.0
+                            for (placeLikelihood in likelyPlaces.placeLikelihoods) {
+                                if (placeLikelihood.likelihood >= maxLikelihood) {
+                                    maxLikelihood = placeLikelihood.likelihood
+                                    returnPlace = placeLikelihood.place
+                                }
+                            }
+                            if (shouldCheckIn(returnPlace)) checkIn()
+                        }
+                    } else {
+                        Log.e(TAG, "Exception: %s", task.exception)
+                    }
+                }
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Exception: %s", e)
+            }
+        }
+    }
+
+    private fun shouldCheckIn(newPlace: Place?): Boolean {
+        val tempLocation = mLocation ?: return false
+        if (SphericalUtil.computeDistanceBetween(
+                LatLng(tempLocation.latitude, tempLocation.longitude), newPlace?.latLng
+            ) <= MAX_DISTANCE) {
+            if (currentPlace == null) {
+                currentPlace = newPlace
+                entryTime = Instant.now().toEpochMilli()
+            } else if (newPlace == null) {
+                return false
+            } else if (currentPlace == newPlace) {
+                val now = Instant.now().toEpochMilli()
+                if (!sentCheckInForCurrentPlace && now - entryTime >= DWELL_TIME) {
+                    sentCheckInForCurrentPlace = true
+                    if (checkedInCurrentPlace) {
+                        return false
+                    }
+                    checkedInCurrentPlace = true
+                    return true
+                }
+            } else if (currentPlace != newPlace) {
+                currentPlace = newPlace
+                entryTime = Instant.now().toEpochMilli()
+                sentCheckInForCurrentPlace = false
+            }
+        }
+        return false
+    }
+
+    private fun checkIn() {
+        PreferenceManager.getDefaultSharedPreferences(this)
+            .edit()
+            .putLong(KEY_CHECKIN_TIMESTAMP, Instant.now().toEpochMilli())
+            .putBoolean(KEY_CHECKIN_PHOTO_SUBMITTED, false)
+            .apply()
+
+        if (foregrounded) {
+            // Send notification
+            val uploadIntent = Intent(this, NavigationActivity::class.java)
+            uploadIntent.putExtra(NavigationActivity.KEY_START_UPLOAD_FRAGMENT, true)
+                .flags = Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
+            val activityPendingIntent = PendingIntent.getActivity(
+                this, 0, uploadIntent, PendingIntent.FLAG_UPDATE_CURRENT
+            )
+            val builder = NotificationCompat.Builder(this, SERVICE_CHANNEL_ID)
+                .setContentIntent(activityPendingIntent)
+                .setContentText(getString(R.string.check_in_content))
+                .setContentTitle(getString(R.string.check_in_title))
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setSmallIcon(R.mipmap.ic_launcher)
+                .setTicker(getString(R.string.check_in_content))
+                .setWhen(System.currentTimeMillis())
+                .setAutoCancel(true)
+            // Set the Channel ID for Android O.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                builder.setChannelId(ALERT_CHANNEL_ID) // Channel ID
+            }
+            mNotificationManager.notify(CHECK_IN_NOTIFICATION_ID, builder.build())
+        } else {
+            // Create dialog
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .edit()
+                .putBoolean(KEY_SHOW_CHECKIN_ALERT, true)
+                .apply()
+        }
+        setCheckInTimer()
+    }
+
+    private fun setCheckInTimer() {
+        val handlerThread = HandlerThread(TAG)
+        handlerThread.start()
+        checkInHandler = Handler(handlerThread.looper)
+        val timerRunnable = Runnable {
+            val photoSubmitted = PreferenceManager.getDefaultSharedPreferences(this@LocationUpdatesService)
+                .getBoolean(KEY_CHECKIN_PHOTO_SUBMITTED, false)
+
+            if (!photoSubmitted) {
+                val currentFirebaseUser = FirebaseAuth.getInstance().currentUser?.email?.split('@')?.get(0)
+                    ?: "No User"
+
+                val valueEventListener = object : ValueEventListener {
+                    override fun onCancelled(databaseError: DatabaseError) {
+                        // handle error
+                    }
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        val numPrompts = (dataSnapshot.child("numberOfTimesPromptedToWearMask")
+                            .value
+                            ?: 0L) as Long
+                        database.child("maskWearing").child(currentFirebaseUser)
+                            .child("numberOfTimesPromptedToWearMask")
+                            .setValue(numPrompts + 1)
+                    }
+                }
+                checkedInCurrentPlace = true
+
+                val ref = database.child("maskWearing").child(currentFirebaseUser)
+                ref.addListenerForSingleValueEvent(valueEventListener)
+
+            }
+        }
+        checkInHandler?.postDelayed(timerRunnable, CHECK_IN_TIME_LIMIT)
+    }
+
     private fun getNewCityNotification(city: String, level: String): Notification {
         val text = getString(R.string.new_city_level_notification, city, level)
         // The PendingIntent to launch activity.
@@ -234,20 +433,18 @@ class LocationUpdatesService : Service() {
             this, 0,
             Intent(this, LoginActivity::class.java), 0
         )
-        val builder = NotificationCompat.Builder(this, CHANNEL_ID)
-            .addAction(
-                0, getString(R.string.launch_app),
-                activityPendingIntent
-            )
+        val builder = NotificationCompat.Builder(this, SERVICE_CHANNEL_ID)
+            .setContentIntent(activityPendingIntent)
             .setContentText(text)
             .setContentTitle(getString(R.string.new_city_level_title))
-            .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setTicker(text)
             .setWhen(System.currentTimeMillis())
+            .setAutoCancel(true)
         // Set the Channel ID for Android O.
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            builder.setChannelId(CHANNEL_ID) // Channel ID
+            builder.setChannelId(ALERT_CHANNEL_ID) // Channel ID
         }
         return builder.build()
     }
@@ -275,7 +472,7 @@ class LocationUpdatesService : Service() {
                 this, 0,
                 Intent(this, LoginActivity::class.java), 0
             )
-            val builder = NotificationCompat.Builder(this, CHANNEL_ID)
+            val builder = NotificationCompat.Builder(this, SERVICE_CHANNEL_ID)
                 .addAction(
                     0, getString(R.string.launch_app),
                     activityPendingIntent
@@ -294,7 +491,7 @@ class LocationUpdatesService : Service() {
 
             // Set the Channel ID for Android O.
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                builder.setChannelId(CHANNEL_ID) // Channel ID
+                builder.setChannelId(SERVICE_CHANNEL_ID) // Channel ID
             }
             return builder.build()
         }
@@ -354,10 +551,11 @@ class LocationUpdatesService : Service() {
                 }
         }
 
+        getCurrentPlace()
         // Update notification content if running as a foreground service.
         if (serviceIsRunningInForeground(this)) {
             mNotificationManager.notify(
-                NOTIFICATION_ID,
+                FOREGROUND_SERVICE_NOTIFICATION_ID,
                 notification
             )
         }
@@ -388,7 +586,7 @@ class LocationUpdatesService : Service() {
             return
         }
         mNotificationManager.notify(
-            NOTIFICATION_ID,
+            CITY_CHANGE_NOTIFICATION_ID,
             getNewCityNotification(cityData.cityTown, cityData.covidLevel)
         )
     }
@@ -440,7 +638,8 @@ class LocationUpdatesService : Service() {
         /**
          * The name of the channel for notifications.
          */
-        private const val CHANNEL_ID = "channel_01"
+        private const val SERVICE_CHANNEL_ID = "service_channel"
+        private const val ALERT_CHANNEL_ID = "alert_channel"
         const val ACTION_BROADCAST = "$PACKAGE_NAME.broadcast"
         const val EXTRA_LOCATION = "$PACKAGE_NAME.location"
         private const val EXTRA_STARTED_FROM_NOTIFICATION = PACKAGE_NAME +
@@ -461,6 +660,19 @@ class LocationUpdatesService : Service() {
         /**
          * The identifier for the notification displayed for the foreground service.
          */
-        private const val NOTIFICATION_ID = 34
+        private const val FOREGROUND_SERVICE_NOTIFICATION_ID = 34
+        private const val CITY_CHANGE_NOTIFICATION_ID = 42
+        private const val CHECK_IN_NOTIFICATION_ID = 14
+
+        // Parameters to determine whether user is at a place
+        private const val DWELL_TIME = 5 * 60 * 1000L  // 5 minutes
+//        private const val DWELL_TIME = 1 * 20 * 1000L  // 5 minutes
+        private const val MAX_DISTANCE = 500
+        const val CHECK_IN_TIME_LIMIT = 5 * 60 * 1000L  // 5 minutes
+//        const val CHECK_IN_TIME_LIMIT = 1 * 20 * 1000L  // 5 minutes
+
+        const val KEY_CHECKIN_TIMESTAMP = "checkin_timestamp"
+        const val KEY_CHECKIN_PHOTO_SUBMITTED = "checkin_photo_submitted"
+        const val KEY_SHOW_CHECKIN_ALERT = "show_checkin_alert"
     }
 }

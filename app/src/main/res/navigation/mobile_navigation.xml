@@ -21,7 +21,12 @@
         android:id="@+id/navigation_upload"
         android:name="edu.wpi.cs528finalproject.ui.upload.UploadFragment"
         android:label="@string/upload"
-        tools:layout="@layout/fragment_upload" />
+        tools:layout="@layout/fragment_upload" >
+        <argument
+            android:name="upload_click"
+            app:argType="boolean"
+            android:defaultValue="false" />
+    </fragment>
 
     <fragment
         android:id="@+id/navigation_profile"
@@ -34,4 +39,12 @@
         android:name="edu.wpi.cs528finalproject.ui.web.WebFragment"
         android:label="@string/covid19info"
         tools:layout="@layout/fragment_web" />
+    <action
+        android:id="@+id/action_global_navigation_upload"
+        app:destination="@id/navigation_upload">
+        <argument
+            android:name="upload_click"
+            app:argType="boolean"
+            android:defaultValue="true" />
+    </action>
 </navigation>

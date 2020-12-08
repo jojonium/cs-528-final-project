@@ -1,6 +1,7 @@
 package edu.wpi.cs528finalproject
 
 import android.Manifest
+import android.app.AlertDialog
 import android.content.*
 import android.location.Location
 import android.os.Bundle
@@ -10,10 +11,13 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import androidx.preference.PreferenceManager
 import com.google.android.libraries.places.api.Places
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import edu.wpi.cs528finalproject.location.LocationUpdatesService
+import edu.wpi.cs528finalproject.location.LocationUpdatesService.Companion.KEY_SHOW_CHECKIN_ALERT
 import edu.wpi.cs528finalproject.ui.home.HomeFragment
+import edu.wpi.cs528finalproject.ui.upload.UploadFragment
 
 interface LocationChangedListener {
     fun onLocationChanged(location: Location?)
@@ -29,6 +33,10 @@ class NavigationActivity : AppCompatActivity() {
 
     // Tracks the bound state of the service.
     private var mBound = false
+
+    companion object {
+        const val KEY_START_UPLOAD_FRAGMENT = "start_upload_fragment"
+    }
 
     /**
      * Receiver for broadcasts sent by [LocationUpdatesService].
@@ -61,6 +69,7 @@ class NavigationActivity : AppCompatActivity() {
             mService?.setCurrentActivity(this@NavigationActivity)
             mBound = true
             enableForegroundLocationFeatures(PermissionRequestCodes.enableLocationUpdatesService)
+            enableForegroundLocationFeatures(PermissionRequestCodes.requestCurrentPlace)
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
@@ -79,6 +88,30 @@ class NavigationActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
         navView.setupWithNavController(navController)
+        addOnLocationChangedListener(object : LocationChangedListener {
+            override fun onLocationChanged(location: Location?) {
+                if (PreferenceManager.getDefaultSharedPreferences(this@NavigationActivity)
+                        .getBoolean(KEY_SHOW_CHECKIN_ALERT, false)) {
+                    val dialog = AlertDialog.Builder(this@NavigationActivity)
+                        .setTitle(R.string.check_in_title)
+                        .setMessage(R.string.check_in_content)
+                        .setPositiveButton(android.R.string.ok
+                        ) { _, _ ->
+                            val uploadIntent =
+                                Intent(this@NavigationActivity, NavigationActivity::class.java)
+                            uploadIntent.putExtra(KEY_START_UPLOAD_FRAGMENT, true)
+                            startActivity(uploadIntent)
+                        }
+                        .setNegativeButton(android.R.string.cancel, null)
+                        .create()
+                    dialog.show()
+                    PreferenceManager.getDefaultSharedPreferences(this@NavigationActivity)
+                        .edit()
+                        .putBoolean(KEY_SHOW_CHECKIN_ALERT, false)
+                        .apply()
+                }
+            }
+        })
     }
 
     override fun onStart() {
@@ -89,6 +122,25 @@ class NavigationActivity : AppCompatActivity() {
             Intent(this, LocationUpdatesService::class.java), mServiceConnection,
             BIND_AUTO_CREATE
         )
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent != null && intent.getBooleanExtra(KEY_START_UPLOAD_FRAGMENT, false)) {
+            val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+            val uploadFragment = UploadFragment()
+            val bundle = Bundle()
+            bundle.putBoolean(UploadFragment.KEY_UPLOAD_CLICK, true)
+            uploadFragment.arguments = bundle
+            val navController = navHostFragment.navController
+            val action = MobileNavigationDirections.actionGlobalNavigationUpload(true)
+            navController.navigate(action)
+            PreferenceManager.getDefaultSharedPreferences(this)
+                .edit()
+                .putBoolean(KEY_START_UPLOAD_FRAGMENT, false)
+                .apply()
+        }
+        intent?.removeExtra(KEY_START_UPLOAD_FRAGMENT)
     }
 
     override fun onResume() {
@@ -124,6 +176,8 @@ class NavigationActivity : AppCompatActivity() {
     private fun enableForegroundLocationFeatures(requestCode: Int) {
         if (requestCode == PermissionRequestCodes.enableLocationUpdatesService) {
             mService?.requestLocationUpdates(this)
+        } else if (requestCode == PermissionRequestCodes.requestCurrentPlace) {
+            mService?.requestPlaceUpdates(this)
         }
     }
 
@@ -147,8 +201,13 @@ class NavigationActivity : AppCompatActivity() {
                         homeFragment.requestLocationPermissions()
                         DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] = false
                     }
+                    if (DeferredPermissions.deferredMap[PermissionRequestCodes.requestCurrentPlace] == true) {
+                        enableForegroundLocationFeatures(PermissionRequestCodes.requestCurrentPlace)
+                        DeferredPermissions.deferredMap[PermissionRequestCodes.requestCurrentPlace] = false
+                    }
                 } else {
                     DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] = false
+                    DeferredPermissions.deferredMap[PermissionRequestCodes.requestCurrentPlace] = false
                 }
             } else if (requestCode == PermissionRequestCodes.enableMapView) {
                 if (PermissionUtils.isPermissionGranted(
@@ -162,8 +221,44 @@ class NavigationActivity : AppCompatActivity() {
                         mService?.requestLocationUpdates(this)
                         DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationUpdatesService] = false
                     }
+                    if (DeferredPermissions.deferredMap[PermissionRequestCodes.requestCurrentPlace] == true) {
+                        enableForegroundLocationFeatures(PermissionRequestCodes.requestCurrentPlace)
+                        DeferredPermissions.deferredMap[PermissionRequestCodes.requestCurrentPlace] = false
+                    }
                 } else {
                     DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationUpdatesService] = false
+                    DeferredPermissions.deferredMap[PermissionRequestCodes.requestCurrentPlace] = false
+                }
+            } else if (requestCode == PermissionRequestCodes.requestCurrentPlace) {
+                if (PermissionUtils.isPermissionGranted(
+                        permissions, grantResults,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    )) {
+                    enableForegroundLocationFeatures(PermissionRequestCodes.requestCurrentPlace)
+                    if (DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationUpdatesService] == true) {
+                        mService?.requestLocationUpdates(this)
+                        DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationUpdatesService] = false
+                    }
+                    if (DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] == true) {
+                        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                        val homeFragment = navHostFragment.childFragmentManager.primaryNavigationFragment as HomeFragment
+                        homeFragment.requestLocationPermissions()
+                        DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] = false
+                    }
+                } else {
+                    DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationUpdatesService] = false
+                    DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] = false
+                }
+            } else if (requestCode == PermissionRequestCodes.enableCamera) {
+                val navHostFragment =
+                    supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                val uploadFragment =
+                    navHostFragment.childFragmentManager.primaryNavigationFragment as UploadFragment
+                if (PermissionUtils.isPermissionGranted(
+                        permissions, grantResults, Manifest.permission.CAMERA)) {
+                    uploadFragment.requestCameraPermissions(false)
+                } else {
+                    uploadFragment.requestCameraPermissions(true)
                 }
             }
         }
