@@ -363,6 +363,7 @@ class LocationUpdatesService : Service() {
             // Send notification
             val uploadIntent = Intent(this, NavigationActivity::class.java)
             uploadIntent.putExtra(NavigationActivity.KEY_START_UPLOAD_FRAGMENT, true)
+                .flags = Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
             val activityPendingIntent = PendingIntent.getActivity(
                 this, 0, uploadIntent, PendingIntent.FLAG_UPDATE_CURRENT
             )
@@ -394,36 +395,35 @@ class LocationUpdatesService : Service() {
         val handlerThread = HandlerThread(TAG)
         handlerThread.start()
         checkInHandler = Handler(handlerThread.looper)
-        object : Runnable {
-            override fun run() {
-                val photoSubmitted = PreferenceManager.getDefaultSharedPreferences(this@LocationUpdatesService)
-                    .getBoolean(KEY_CHECKIN_PHOTO_SUBMITTED, false)
+        val timerRunnable = Runnable {
+            val photoSubmitted = PreferenceManager.getDefaultSharedPreferences(this@LocationUpdatesService)
+                .getBoolean(KEY_CHECKIN_PHOTO_SUBMITTED, false)
 
-                if (!photoSubmitted) {
-                    var numPrompts = 0L
-                    val valueEventListener = object : ValueEventListener {
-                        override fun onCancelled(databaseError: DatabaseError) {
-                            // handle error
-                        }
-                        override fun onDataChange(dataSnapshot: DataSnapshot) {
-                            numPrompts = (dataSnapshot.child("numberOfTimesPromptedToWearMask")
-                                .value
-                                ?: 0L) as Long
-                        }
+            if (!photoSubmitted) {
+                val currentFirebaseUser = FirebaseAuth.getInstance().currentUser?.email?.split('@')?.get(0)
+                    ?: "No User"
+
+                val valueEventListener = object : ValueEventListener {
+                    override fun onCancelled(databaseError: DatabaseError) {
+                        // handle error
                     }
-                    checkedInCurrentPlace = true
-
-                    val currentFirebaseUser = FirebaseAuth.getInstance().currentUser?.email?.split('@')?.get(0)
-                        ?: "No User"
-
-                    val ref = database.child("maskWearing").child(currentFirebaseUser)
-                    ref.addListenerForSingleValueEvent(valueEventListener)
-                    database.child("maskWearing").child(currentFirebaseUser).child("numberOfTimesPromptedToWearMask").setValue(numPrompts + 1)
-
-                    checkInHandler!!.postDelayed(this, CHECK_IN_TIME_LIMIT)
+                    override fun onDataChange(dataSnapshot: DataSnapshot) {
+                        val numPrompts = (dataSnapshot.child("numberOfTimesPromptedToWearMask")
+                            .value
+                            ?: 0L) as Long
+                        database.child("maskWearing").child(currentFirebaseUser)
+                            .child("numberOfTimesPromptedToWearMask")
+                            .setValue(numPrompts + 1)
+                    }
                 }
+                checkedInCurrentPlace = true
+
+                val ref = database.child("maskWearing").child(currentFirebaseUser)
+                ref.addListenerForSingleValueEvent(valueEventListener)
+
             }
         }
+        checkInHandler?.postDelayed(timerRunnable, CHECK_IN_TIME_LIMIT)
     }
 
     private fun getNewCityNotification(city: String, level: String): Notification {

@@ -38,6 +38,7 @@ import java.time.Instant
 private const val REQUEST_CODE = 528
 class UploadFragment : Fragment() {
     private val args: UploadFragmentArgs by navArgs()
+    private var clickProcessed = false
 
     private lateinit var uploadViewModel: UploadViewModel
     private lateinit var classifier: MaskClassifier
@@ -56,6 +57,7 @@ class UploadFragment : Fragment() {
     override fun onAttach(context: Context) {
         ctx = context
         super.onAttach(context)
+        clickProcessed = false
     }
 
     override fun onCreateView(
@@ -184,8 +186,9 @@ class UploadFragment : Fragment() {
     override fun onResume() {
         super.onResume()
         val checkIn = args.uploadClick
-        if (checkIn) {
+        if (checkIn && !clickProcessed) {
             imageButtonTakePicture.performClick()
+            clickProcessed = true
         }
     }
 }

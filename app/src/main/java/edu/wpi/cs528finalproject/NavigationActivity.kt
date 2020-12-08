@@ -140,6 +140,7 @@ class NavigationActivity : AppCompatActivity() {
                 .putBoolean(KEY_START_UPLOAD_FRAGMENT, false)
                 .apply()
         }
+        intent?.removeExtra(KEY_START_UPLOAD_FRAGMENT)
     }
 
     override fun onResume() {
