@@ -88,6 +88,7 @@ class NavigationActivity : AppCompatActivity() {
         val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
         val navController = navHostFragment.navController
         navView.setupWithNavController(navController)
+        navView.setOnNavigationItemReselectedListener {  }
         addOnLocationChangedListener(object : LocationChangedListener {
             override fun onLocationChanged(location: Location?) {
                 if (PreferenceManager.getDefaultSharedPreferences(this@NavigationActivity)
