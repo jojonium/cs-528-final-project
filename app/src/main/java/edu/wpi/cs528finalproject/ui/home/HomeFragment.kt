@@ -159,7 +159,7 @@ class HomeFragment :
                 }
             }
         })
-        getFriebaseReportdata()
+        getFirebaseReportData()
         return root
     }
 
