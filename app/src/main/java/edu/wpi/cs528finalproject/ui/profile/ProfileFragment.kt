@@ -82,7 +82,7 @@ class ProfileFragment : Fragment() {
         ref.addListenerForSingleValueEvent(percentEventListener)
 
         // Calculate the users percentile compared to all other users in firebase
-        var percentileArray = FloatArray(10)
+        val percentileArray = FloatArray(10)
         val percentileEventListener = object : ValueEventListener {
             override fun onCancelled(databaseError: DatabaseError) {
                 // handle error
@@ -167,23 +167,21 @@ class ProfileFragment : Fragment() {
     }
 
     private fun setUpBarChart(percentileArray: FloatArray){
-        var barEntries = arrayListOf<BarEntry>()
-        var xAxisLabels = arrayListOf<String>()
+        val barEntries = arrayListOf<BarEntry>()
+        val xAxisLabels = arrayListOf<String>()
         xAxisLabels.addAll(listOf("0-10%","11-20%","21-30%","31-40%","41-50%","51-60%","61-70%","71-80%","81-90%","91-100%"))
-        var index=0
-        for(p in percentileArray){
+        for((index, p) in percentileArray.withIndex()){
             barEntries.add(BarEntry(p, index))
-            index++
         }
-        var barDataSetY = BarDataSet(barEntries,"Number of Users")
-        barDataSetY.setColor(resources.getColor(R.color.red))
-        var barData = BarData(xAxisLabels, barDataSetY)
+        val barDataSetY = BarDataSet(barEntries,"Number of Users")
+        barDataSetY.color = ContextCompat.getColor(requireContext(), R.color.red)
+        val barData = BarData(xAxisLabels, barDataSetY)
         barChart.data = barData
         barChart.invalidate()
         barChart.setScaleEnabled(false)
         barChart.setDescription("")
         barChart.xAxis.setLabelsToSkip(0)
-        barChart.xAxis.setLabelRotationAngle(-30f)
-        barChart.setExtraTopOffset(18f)
+        barChart.xAxis.labelRotationAngle = -30f
+        barChart.extraTopOffset = 18f
     }
 }

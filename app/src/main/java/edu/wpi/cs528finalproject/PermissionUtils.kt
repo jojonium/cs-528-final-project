@@ -28,6 +28,7 @@ import androidx.fragment.app.DialogFragment
 object PermissionRequestCodes {
     const val enableLocationUpdatesService = 0
     const val enableMapView = 1
+    const val requestCurrentPlace = 2
 }
 
 object DeferredPermissions {
@@ -35,6 +36,7 @@ object DeferredPermissions {
     init {
         deferredMap[PermissionRequestCodes.enableLocationUpdatesService] = false
         deferredMap[PermissionRequestCodes.enableMapView] = false
+        deferredMap[PermissionRequestCodes.requestCurrentPlace] = false
     }
 }
 

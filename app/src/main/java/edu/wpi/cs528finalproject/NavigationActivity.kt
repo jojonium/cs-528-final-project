@@ -2,18 +2,28 @@ package edu.wpi.cs528finalproject
 
 import android.Manifest
 import android.content.*
+import android.content.pm.PackageManager
 import android.location.Location
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
+import android.util.Log
 import android.webkit.WebView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.localbroadcastmanager.content.LocalBroadcastManager
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.ui.setupWithNavController
+import com.google.android.gms.tasks.Task
 import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
+import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse
+import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import edu.wpi.cs528finalproject.location.LocationUpdatesService
 import edu.wpi.cs528finalproject.ui.home.HomeFragment
+import java.time.LocalDateTime
 
 interface LocationChangedListener {
     fun onLocationChanged(location: Location?)
@@ -61,6 +71,7 @@ class NavigationActivity : AppCompatActivity() {
             mService?.setCurrentActivity(this@NavigationActivity)
             mBound = true
             enableForegroundLocationFeatures(PermissionRequestCodes.enableLocationUpdatesService)
+            enableForegroundLocationFeatures(PermissionRequestCodes.requestCurrentPlace)
         }
 
         override fun onServiceDisconnected(name: ComponentName) {
@@ -124,6 +135,8 @@ class NavigationActivity : AppCompatActivity() {
     private fun enableForegroundLocationFeatures(requestCode: Int) {
         if (requestCode == PermissionRequestCodes.enableLocationUpdatesService) {
             mService?.requestLocationUpdates(this)
+        } else if (requestCode == PermissionRequestCodes.requestCurrentPlace) {
+            mService?.requestPlaceUpdates(this)
         }
     }
 
@@ -147,8 +160,13 @@ class NavigationActivity : AppCompatActivity() {
                         homeFragment.requestLocationPermissions()
                         DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] = false
                     }
+                    if (DeferredPermissions.deferredMap[PermissionRequestCodes.requestCurrentPlace] == true) {
+                        enableForegroundLocationFeatures(PermissionRequestCodes.requestCurrentPlace)
+                        DeferredPermissions.deferredMap[PermissionRequestCodes.requestCurrentPlace] = false
+                    }
                 } else {
                     DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] = false
+                    DeferredPermissions.deferredMap[PermissionRequestCodes.requestCurrentPlace] = false
                 }
             } else if (requestCode == PermissionRequestCodes.enableMapView) {
                 if (PermissionUtils.isPermissionGranted(
@@ -162,8 +180,33 @@ class NavigationActivity : AppCompatActivity() {
                         mService?.requestLocationUpdates(this)
                         DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationUpdatesService] = false
                     }
+                    if (DeferredPermissions.deferredMap[PermissionRequestCodes.requestCurrentPlace] == true) {
+                        enableForegroundLocationFeatures(PermissionRequestCodes.requestCurrentPlace)
+                        DeferredPermissions.deferredMap[PermissionRequestCodes.requestCurrentPlace] = false
+                    }
                 } else {
                     DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationUpdatesService] = false
+                    DeferredPermissions.deferredMap[PermissionRequestCodes.requestCurrentPlace] = false
+                }
+            } else if (requestCode == PermissionRequestCodes.requestCurrentPlace) {
+                if (PermissionUtils.isPermissionGranted(
+                        permissions, grantResults,
+                        Manifest.permission.ACCESS_FINE_LOCATION
+                    )) {
+                    enableForegroundLocationFeatures(PermissionRequestCodes.requestCurrentPlace)
+                    if (DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationUpdatesService] == true) {
+                        mService?.requestLocationUpdates(this)
+                        DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationUpdatesService] = false
+                    }
+                    if (DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] == true) {
+                        val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
+                        val homeFragment = navHostFragment.childFragmentManager.primaryNavigationFragment as HomeFragment
+                        homeFragment.requestLocationPermissions()
+                        DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] = false
+                    }
+                } else {
+                    DeferredPermissions.deferredMap[PermissionRequestCodes.enableLocationUpdatesService] = false
+                    DeferredPermissions.deferredMap[PermissionRequestCodes.enableMapView] = false
                 }
             }
         }

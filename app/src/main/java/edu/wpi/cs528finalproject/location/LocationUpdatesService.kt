@@ -22,8 +22,15 @@ import com.github.kittinunf.fuel.core.Response
 import com.github.kittinunf.fuel.core.extensions.jsonBody
 import com.github.kittinunf.result.Result
 import com.google.android.gms.location.*
+import com.google.android.gms.tasks.Task
+import com.google.android.libraries.places.api.Places
+import com.google.android.libraries.places.api.model.Place
+import com.google.android.libraries.places.api.net.FindCurrentPlaceRequest
+import com.google.android.libraries.places.api.net.FindCurrentPlaceResponse
+import com.google.android.libraries.places.api.net.PlacesClient
 import edu.wpi.cs528finalproject.*
 import edu.wpi.cs528finalproject.R
+import java.time.LocalDateTime
 import java.util.*
 
 
@@ -77,6 +84,15 @@ class LocationUpdatesService : Service() {
 
     private var curActivity: AppCompatActivity? = null
 
+    // Parameters for check-in
+    private var hasPlacePermission = false
+
+    private lateinit var mPlacesClient: PlacesClient
+
+    private var currentPlace: Place? = null
+    private var prevPlace: Place? = null
+    private var entryTime: LocalDateTime? = null
+
     fun setCurrentActivity(activity: AppCompatActivity) {
         curActivity = activity
     }
@@ -89,6 +105,7 @@ class LocationUpdatesService : Service() {
                 onNewLocation(locationResult.lastLocation)
             }
         }
+        mPlacesClient = Places.createClient(this)
         createLocationRequest()
         lastLocation
         val handlerThread = HandlerThread(TAG)
@@ -157,7 +174,7 @@ class LocationUpdatesService : Service() {
         // do nothing. Otherwise, we make this service a foreground service.
         if (!mChangingConfiguration && Utils.requestingLocationUpdates(this)) {
             Log.i(TAG, "Starting foreground service")
-            startForeground(NOTIFICATION_ID, notification)
+            startForeground(FOREGROUND_SERVICE_NOTIFICATION_ID, notification)
         }
         return true // Ensures onRebind() is called when a client re-binds.
     }
@@ -224,6 +241,64 @@ class LocationUpdatesService : Service() {
             mFusedLocationClient.removeLocationUpdates(mLocationCallback)
             Utils.setRequestingLocationUpdates(this, false)
             stopSelf()
+        }
+    }
+
+    fun requestPlaceUpdates(activity: AppCompatActivity) {
+        if (ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_FINE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(
+                this,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ) != PackageManager.PERMISSION_GRANTED
+        ) {
+            if (Build.VERSION.SDK_INT >= 23) {
+                PermissionUtils.requestPermission(
+                    activity, PermissionRequestCodes.requestCurrentPlace,
+                    Manifest.permission.ACCESS_FINE_LOCATION, false,
+                    R.string.location_permission_required,
+                    R.string.location_permission_rationale
+                )
+            }
+        } else {
+            hasPlacePermission = true
+        }
+    }
+
+    private fun getCurrentPlace() {
+        if (hasPlacePermission) {
+            try {
+                // Get the likely places - that is, the businesses and other points of interest that
+                // are the best match for the device's current location.
+                // Use fields to define the data types to return.
+                val placeFields = listOf(Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG)
+
+                // Use the builder to create a FindCurrentPlaceRequest.
+                val request = FindCurrentPlaceRequest.newInstance(placeFields)
+
+                val placeResult = mPlacesClient.findCurrentPlace(request)
+                var returnPlace: Place? = null
+                placeResult.addOnCompleteListener { task ->
+                    if (task.isSuccessful && task.result != null) {
+                        val likelyPlaces = task.result
+                        if (likelyPlaces != null) {
+                            var maxLikelihood = 0.0
+                            for (placeLikelihood in likelyPlaces.placeLikelihoods) {
+                                if (placeLikelihood.likelihood >= maxLikelihood) {
+                                    maxLikelihood = placeLikelihood.likelihood
+                                    returnPlace = placeLikelihood.place
+                                }
+                            }
+                            // TODO: Add logic here!
+                        }
+                    } else {
+                        Log.e(TAG, "Exception: %s", task.exception)
+                    }
+                }
+            } catch (e: SecurityException) {
+                Log.e(TAG, "Exception: %s", e)
+            }
         }
     }
 
@@ -354,10 +429,13 @@ class LocationUpdatesService : Service() {
                 }
         }
 
+        // TODO: Handle check-in notification here
+        val place = getCurrentPlace()
+
         // Update notification content if running as a foreground service.
         if (serviceIsRunningInForeground(this)) {
             mNotificationManager.notify(
-                NOTIFICATION_ID,
+                FOREGROUND_SERVICE_NOTIFICATION_ID,
                 notification
             )
         }
@@ -388,7 +466,7 @@ class LocationUpdatesService : Service() {
             return
         }
         mNotificationManager.notify(
-            NOTIFICATION_ID,
+            CITY_CHANGE_NOTIFICATION_ID,
             getNewCityNotification(cityData.cityTown, cityData.covidLevel)
         )
     }
@@ -461,6 +539,12 @@ class LocationUpdatesService : Service() {
         /**
          * The identifier for the notification displayed for the foreground service.
          */
-        private const val NOTIFICATION_ID = 34
+        private const val FOREGROUND_SERVICE_NOTIFICATION_ID = 34
+
+        private const val CITY_CHANGE_NOTIFICATION_ID = 42
+
+        // Parameters to determine whether user is at a place
+        private const val DWELL_TIME = 5 * 60 * 1000L  // 5 minutes
+        private const val MAX_DISTANCE = 500
     }
 }
