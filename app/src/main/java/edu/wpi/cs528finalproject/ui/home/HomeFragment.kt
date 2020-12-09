@@ -323,6 +323,13 @@ class HomeFragment :
             } else {
                 searchMarker?.showInfoWindow()
             }
+        } else {
+            searchMarker = mMap?.addMarker(
+                    MarkerOptions()
+                            .position(latLng)
+                            .title("No reports made for this location")
+            )
+            searchMarker?.showInfoWindow()
         }
         mMap?.moveCamera(
             CameraUpdateFactory.newLatLngZoom(latLng, defaultZoom)
