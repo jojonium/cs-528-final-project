@@ -297,7 +297,8 @@ class LocationUpdatesService : Service() {
                 // Get the likely places - that is, the businesses and other points of interest that
                 // are the best match for the device's current location.
                 // Use fields to define the data types to return.
-                val placeFields = listOf(Place.Field.NAME, Place.Field.ADDRESS, Place.Field.LAT_LNG)
+                val placeFields = listOf(Place.Field.ID, Place.Field.NAME, Place.Field.ADDRESS,
+                    Place.Field.LAT_LNG)
 
                 // Use the builder to create a FindCurrentPlaceRequest.
                 val request = FindCurrentPlaceRequest.newInstance(placeFields)

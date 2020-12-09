@@ -60,11 +60,12 @@ class HomeFragment :
     private lateinit var alertTextNumCasesView: TextView
     private lateinit var alertTextZoneView: TextView
     private lateinit var alertCircle: View
-    private var marker: Marker? = null
+    private var searchMarker: Marker? = null
     private var selectedPoi: PointOfInterest? = null
     private var previousCity = ""
     private var currentLocation: Location? = null
-    private var markers: HashMap<*, *>? = null
+    private var databaseReportLocations: HashMap<*, *>? = null
+    private var markers: HashMap<LatLng, Marker>? = null
 
     private lateinit var database: DatabaseReference
 
@@ -171,22 +172,25 @@ class HomeFragment :
 
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if (dataSnapshot.value != null) {
-                    markers = dataSnapshot.value as HashMap<*, *>
+                    databaseReportLocations = dataSnapshot.value as HashMap<*, *>
                 }
-                if (markers != null) {
-                    for ((key, value) in markers!!) {
+                if (databaseReportLocations != null) {
+                    for ((key, value) in databaseReportLocations!!) {
                         val latlong = FirebaseEncoder.decodeFromFirebaseKey(key.toString())
                         val lat = latlong.split('(')[1].split(',')[0].toDouble()
                         val long = latlong.split(',')[1].replace(")", "").toDouble()
                         val point = LatLng(lat, long)
                         val tempValue = value as HashMap<*,*>
                         val test = System.currentTimeMillis() - 86400000
-                        if(tempValue["timestamp"] as Long > test) {
-                            mMap?.addMarker(
+                        if (tempValue["timestamp"] as Long > test) {
+                            val marker = mMap?.addMarker(
                                     MarkerOptions()
                                             .position(point)
                                             .title(tempValue["noofpeople"].toString() + " people not wearing masks reported")
                             )
+                            if (marker != null) {
+                                markers?.put(point, marker)
+                            }
                         }
                     }
                 }
@@ -294,8 +298,8 @@ class HomeFragment :
 
 
     override fun onMapClick(latLng: LatLng) {
-        marker?.remove()
-        marker = null
+        searchMarker?.remove()
+        searchMarker = null
         selectedPoi = null
     }
 
@@ -305,15 +309,20 @@ class HomeFragment :
     }
 
     private fun showPlace(latLng: LatLng) {
-        if (marker != null && marker?.position?.equals(latLng) == true) {
-            marker?.remove()
-            marker = null
+        if (searchMarker != null && searchMarker?.position?.equals(latLng) == true) {
+            searchMarker?.remove()
+            searchMarker = null
         }
-        marker = mMap?.addMarker(
-            // TODO: Add COVID data to marker info window
-            MarkerOptions()
-                .position(latLng)
-        )
+        if (markers?.containsKey(latLng) == true) {
+            markers?.get(latLng)?.showInfoWindow()
+        } else {
+            searchMarker = mMap?.addMarker(
+                    MarkerOptions()
+                            .position(latLng)
+                            .title("No reports made for this location")
+            )
+            searchMarker?.showInfoWindow()
+        }
         mMap?.moveCamera(
             CameraUpdateFactory.newLatLngZoom(latLng, defaultZoom)
         )
