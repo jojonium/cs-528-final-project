@@ -14,8 +14,10 @@ import androidx.navigation.ui.setupWithNavController
 import androidx.preference.PreferenceManager
 import com.google.android.libraries.places.api.Places
 import com.google.android.material.bottomnavigation.BottomNavigationView
+import edu.wpi.cs528finalproject.PreferenceKeys.KEY_SHOW_CHECKIN_ALERT
+import edu.wpi.cs528finalproject.PreferenceKeys.KEY_START_UPLOAD_FRAGMENT
+import edu.wpi.cs528finalproject.PreferenceKeys.KEY_UPLOAD_CLICK
 import edu.wpi.cs528finalproject.location.LocationUpdatesService
-import edu.wpi.cs528finalproject.location.LocationUpdatesService.Companion.KEY_SHOW_CHECKIN_ALERT
 import edu.wpi.cs528finalproject.ui.home.HomeFragment
 import edu.wpi.cs528finalproject.ui.upload.UploadFragment
 
@@ -33,10 +35,6 @@ class NavigationActivity : AppCompatActivity() {
 
     // Tracks the bound state of the service.
     private var mBound = false
-
-    companion object {
-        const val KEY_START_UPLOAD_FRAGMENT = "start_upload_fragment"
-    }
 
     /**
      * Receiver for broadcasts sent by [LocationUpdatesService].
@@ -131,7 +129,7 @@ class NavigationActivity : AppCompatActivity() {
             val navHostFragment = supportFragmentManager.findFragmentById(R.id.nav_host_fragment) as NavHostFragment
             val uploadFragment = UploadFragment()
             val bundle = Bundle()
-            bundle.putBoolean(UploadFragment.KEY_UPLOAD_CLICK, true)
+            bundle.putBoolean(KEY_UPLOAD_CLICK, true)
             uploadFragment.arguments = bundle
             val navController = navHostFragment.navController
             val action = MobileNavigationDirections.actionGlobalNavigationUpload(true)

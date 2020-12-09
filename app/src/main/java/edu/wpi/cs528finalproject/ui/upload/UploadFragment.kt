@@ -27,10 +27,9 @@ import com.google.firebase.database.ValueEventListener
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import edu.wpi.cs528finalproject.*
-import edu.wpi.cs528finalproject.location.LocationUpdatesService
+import edu.wpi.cs528finalproject.PreferenceKeys.KEY_CHECKIN_PHOTO_SUBMITTED
+import edu.wpi.cs528finalproject.PreferenceKeys.KEY_CHECKIN_TIMESTAMP
 import edu.wpi.cs528finalproject.location.LocationUpdatesService.Companion.CHECK_IN_TIME_LIMIT
-import edu.wpi.cs528finalproject.location.LocationUpdatesService.Companion.KEY_CHECKIN_PHOTO_SUBMITTED
-import edu.wpi.cs528finalproject.location.LocationUpdatesService.Companion.KEY_CHECKIN_TIMESTAMP
 import kotlinx.android.synthetic.main.fragment_upload.*
 import java.time.Instant
 
@@ -49,10 +48,6 @@ class UploadFragment : Fragment() {
     private var numberOfTimesPromptedToWearMask = 0L
 
     private var clickable = false
-
-    companion object {
-        const val KEY_UPLOAD_CLICK = "upload_click"
-    }
 
     override fun onAttach(context: Context) {
         ctx = context

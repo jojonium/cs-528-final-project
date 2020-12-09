@@ -37,6 +37,10 @@ import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
 import com.google.maps.android.SphericalUtil
 import edu.wpi.cs528finalproject.*
+import edu.wpi.cs528finalproject.PreferenceKeys.KEY_CHECKIN_PHOTO_SUBMITTED
+import edu.wpi.cs528finalproject.PreferenceKeys.KEY_CHECKIN_TIMESTAMP
+import edu.wpi.cs528finalproject.PreferenceKeys.KEY_SHOW_CHECKIN_ALERT
+import edu.wpi.cs528finalproject.PreferenceKeys.KEY_START_UPLOAD_FRAGMENT
 import edu.wpi.cs528finalproject.R
 import java.time.Instant
 import java.util.*
@@ -362,7 +366,7 @@ class LocationUpdatesService : Service() {
         if (foregrounded) {
             // Send notification
             val uploadIntent = Intent(this, NavigationActivity::class.java)
-            uploadIntent.putExtra(NavigationActivity.KEY_START_UPLOAD_FRAGMENT, true)
+            uploadIntent.putExtra(KEY_START_UPLOAD_FRAGMENT, true)
                 .flags = Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS
             val activityPendingIntent = PendingIntent.getActivity(
                 this, 0, uploadIntent, PendingIntent.FLAG_UPDATE_CURRENT
@@ -670,9 +674,5 @@ class LocationUpdatesService : Service() {
         private const val MAX_DISTANCE = 500
         const val CHECK_IN_TIME_LIMIT = 5 * 60 * 1000L  // 5 minutes
 //        const val CHECK_IN_TIME_LIMIT = 1 * 20 * 1000L  // 5 minutes
-
-        const val KEY_CHECKIN_TIMESTAMP = "checkin_timestamp"
-        const val KEY_CHECKIN_PHOTO_SUBMITTED = "checkin_photo_submitted"
-        const val KEY_SHOW_CHECKIN_ALERT = "show_checkin_alert"
     }
 }
