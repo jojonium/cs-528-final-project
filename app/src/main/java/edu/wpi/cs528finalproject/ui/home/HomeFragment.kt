@@ -65,7 +65,7 @@ class HomeFragment :
     private var previousCity = ""
     private var currentLocation: Location? = null
     private var databaseReportLocations: HashMap<*, *>? = null
-    private var markers: HashMap<LatLng, Marker>? = null
+    private var markers: HashMap<LatLng, Marker> = hashMapOf()
 
     private lateinit var database: DatabaseReference
 
@@ -189,7 +189,7 @@ class HomeFragment :
                                             .title(tempValue["noofpeople"].toString() + " people not wearing masks reported")
                             )
                             if (marker != null) {
-                                markers?.put(point, marker)
+                                markers[point] = marker
                             }
                         }
                     }
@@ -309,19 +309,20 @@ class HomeFragment :
     }
 
     private fun showPlace(latLng: LatLng) {
-        if (searchMarker != null && searchMarker?.position?.equals(latLng) == true) {
-            searchMarker?.remove()
-            searchMarker = null
-        }
-        if (markers?.containsKey(latLng) == true) {
-            markers?.get(latLng)?.showInfoWindow()
-        } else {
-            searchMarker = mMap?.addMarker(
-                    MarkerOptions()
-                            .position(latLng)
-                            .title("No reports made for this location")
-            )
-            searchMarker?.showInfoWindow()
+        if (markers.containsKey(latLng)) {
+            markers[latLng]?.showInfoWindow()
+        } else if (searchMarker != null){
+            if (searchMarker?.position?.equals(latLng) == false) {
+                searchMarker?.remove()
+                searchMarker = mMap?.addMarker(
+                        MarkerOptions()
+                                .position(latLng)
+                                .title("No reports made for this location")
+                )
+                searchMarker?.showInfoWindow()
+            } else {
+                searchMarker?.showInfoWindow()
+            }
         }
         mMap?.moveCamera(
             CameraUpdateFactory.newLatLngZoom(latLng, defaultZoom)
