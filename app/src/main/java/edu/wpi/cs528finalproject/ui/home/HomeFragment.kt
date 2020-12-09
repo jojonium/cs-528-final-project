@@ -282,14 +282,14 @@ class HomeFragment :
         mMap?.setOnMapClickListener(this)
         requestLocationPermissions()
 
-        if (markers != null) {
-            for ((key, value) in markers!!) {
+//        if (markers != null) {
+//            for ((key, value) in markers!!) {
 //                googleMap?.addMarker(
 //                        MarkerOptions()
 //                                .position(key)
 //                )
-            }
-        }
+//            }
+//        }
     }
 
 
